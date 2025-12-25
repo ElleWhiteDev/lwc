@@ -432,3 +432,36 @@
     grid-column: span 1;
   }
 }
+
+/* Star Burst Easter Egg */
+.star-particle {
+  position: absolute;
+  pointer-events: none;
+  clip-path: polygon(
+    50% 0%,
+    61% 35%,
+    98% 35%,
+    68% 57%,
+    79% 91%,
+    50% 70%,
+    21% 91%,
+    32% 57%,
+    2% 35%,
+    39% 35%
+  );
+  animation: star-burst 1.5s ease-out forwards;
+  opacity: 1;
+  transform-origin: center;
+}
+
+@keyframes star-burst {
+  0% {
+    transform: translate(0, 0) rotate(var(--rotation)) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(var(--vx) * 100px), calc(var(--vy) * 100px))
+      rotate(calc(var(--rotation) + 360deg)) scale(0);
+    opacity: 0;
+  }
+}

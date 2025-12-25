@@ -1,10 +1,52 @@
 import { Link } from "react-router-dom";
+import { useState, useRef } from "react";
 import { SITE_CONFIG } from "../config/siteConfig";
 import "./Home.css";
 import GirlWithFlag from "../assets/images/Girl with Flag.svg";
 import LWCHomeBackground from "../assets/images/LWCHomeBackground.svg";
 
 const Home = () => {
+  const [stars, setStars] = useState([]);
+  const heroImageRef = useRef(null);
+
+  const createStarBurst = (e) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    const clickX = e.clientX - rect.left;
+    const clickY = e.clientY - rect.top;
+
+    // Create 12 stars that shoot out in different directions
+    const newStars = Array.from({ length: 12 }, (_, i) => {
+      const angle = (i * 30 * Math.PI) / 180; // Spread evenly in a circle
+      const velocity = 2 + Math.random() * 2; // Random velocity
+      const size = 8 + Math.random() * 8; // Random size between 8-16px
+
+      return {
+        id: Date.now() + i,
+        x: clickX,
+        y: clickY,
+        vx: Math.cos(angle) * velocity,
+        vy: Math.sin(angle) * velocity - 2, // Bias upward
+        size,
+        rotation: Math.random() * 360,
+        color: [
+          "#E40303",
+          "#FF8C00",
+          "#FFED00",
+          "#008026",
+          "#24408E",
+          "#732982",
+        ][Math.floor(Math.random() * 6)], // Pride colors
+      };
+    });
+
+    setStars((prev) => [...prev, ...newStars]);
+
+    // Remove stars after animation
+    setTimeout(() => {
+      setStars((prev) => prev.filter((star) => !newStars.includes(star)));
+    }, 1500);
+  };
+
   return (
     <div className="home">
       {/* Hero Section */}
@@ -56,11 +98,32 @@ const Home = () => {
               </a>
             </div>
           </div>
-          <div className="hero-image">
+          <div
+            className="hero-image"
+            ref={heroImageRef}
+            onClick={createStarBurst}
+            style={{ cursor: "pointer", position: "relative" }}
+          >
             <img
               src={GirlWithFlag}
               alt="Illustration of person celebrating with pride flag"
             />
+            {stars.map((star) => (
+              <div
+                key={star.id}
+                className="star-particle"
+                style={{
+                  left: `${star.x}px`,
+                  top: `${star.y}px`,
+                  width: `${star.size}px`,
+                  height: `${star.size}px`,
+                  backgroundColor: star.color,
+                  "--vx": star.vx,
+                  "--vy": star.vy,
+                  "--rotation": `${star.rotation}deg`,
+                }}
+              />
+            ))}
           </div>
         </div>
       </section>
