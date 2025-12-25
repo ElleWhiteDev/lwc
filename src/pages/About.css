@@ -50,12 +50,16 @@
 }
 
 .mission-card {
-  padding: var(--spacing-lg);
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
-  max-width: 100%;
-  box-sizing: border-box;
+	  padding: var(--spacing-lg);
+	  /* Use CSS grid so icon sits in the first column and text wraps
+	     naturally in the second column without forcing horizontal overflow */
+	  display: grid;
+	  grid-template-columns: auto minmax(0, 1fr);
+	  column-gap: var(--spacing-md);
+	  row-gap: var(--spacing-xs);
+	  align-items: flex-start;
+	  max-width: 100%;
+	  box-sizing: border-box;
 }
 
 .mission-card:hover {
@@ -65,19 +69,23 @@
 }
 
 .mission-icon {
-  font-size: 2rem;
-  flex-shrink: 0;
+	  font-size: 2rem;
+	  /* Keep the icon in the first grid column across both text rows */
+	  grid-row: 1 / span 2;
+	  grid-column: 1;
 }
 
 .mission-card h3 {
-  color: var(--primary-purple);
-  margin-bottom: var(--spacing-xs);
+	  color: var(--primary-purple);
+	  margin-bottom: var(--spacing-xs);
+	  grid-column: 2;
 }
 
 .mission-card p {
-  color: var(--medium-gray);
-  margin: 0;
-  font-size: 0.9rem;
+	  color: var(--medium-gray);
+	  margin: 0;
+	  font-size: 0.9rem;
+	  grid-column: 2;
 }
 
 /* Values Section */
@@ -214,14 +222,22 @@
   }
 }
 
-@media (max-width: 768px) {
-  .mission-grid {
-    grid-template-columns: 1fr;
-    gap: var(--spacing-2xl);
-  }
+	@media (max-width: 768px) {
+	  .mission-grid {
+	    /* Simplify layout on small screens to avoid any grid-related overflow */
+	    display: block;
+	  }
 
-  .values-grid,
-  .board-grid {
-    grid-template-columns: 1fr;
-  }
-}
+	  .mission-image {
+	    margin-top: var(--spacing-2xl);
+	  }
+
+	  .mission-card {
+	    width: 100%;
+	  }
+
+	  .values-grid,
+	  .board-grid {
+	    grid-template-columns: 1fr;
+	  }
+	}
