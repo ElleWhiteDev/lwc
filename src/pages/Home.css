@@ -104,11 +104,30 @@
   align-self: end;
   padding-right: 5%;
   padding-bottom: var(--spacing-xl);
+	width: 100%;
+	max-width: 480px;
+	aspect-ratio: 4 / 5;
+	background-image: url("../assets/images/Girl with Flag.svg");
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: bottom right;
+	-webkit-tap-highlight-color: transparent;
+	-webkit-touch-callout: none;
+	touch-action: manipulation;
 }
 
 .hero-image img {
   max-width: 100%;
   height: auto;
+}
+
+/* Remove mobile tap highlight and selection on decorative hero image
+   and its particles while keeping our own click animation effect */
+.hero-image,
+.hero-image * {
+	-webkit-tap-highlight-color: transparent;
+	-webkit-user-select: none;
+	user-select: none;
 }
 
 /* Pride Highlight Section */

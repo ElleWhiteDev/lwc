@@ -114,6 +114,9 @@ body {
   color: var(--dark-gray);
   background-color: var(--white);
   min-height: 100vh;
+  /* Remove default iOS/Android tap highlight globally to avoid blue
+     flash around tappable elements like the hero image */
+  -webkit-tap-highlight-color: transparent;
 }
 
 #root {

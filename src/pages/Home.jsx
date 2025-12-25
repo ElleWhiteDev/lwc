@@ -2,7 +2,6 @@ import { Link } from "react-router-dom";
 import { useState, useRef } from "react";
 import { SITE_CONFIG } from "../config/siteConfig";
 import "./Home.css";
-import GirlWithFlag from "../assets/images/Girl with Flag.svg";
 import LWCHomeBackground from "../assets/images/LWCHomeBackground.svg";
 
 const Home = () => {
@@ -46,6 +45,22 @@ const Home = () => {
       setStars((prev) => prev.filter((star) => !newStars.includes(star)));
     }, 1500);
   };
+
+	  // Handle touch separately so we can prevent the default tap highlight
+	  // while still triggering the same starburst effect.
+	  const createStarBurstFromTouch = (e) => {
+	    if (e.cancelable) {
+	      e.preventDefault();
+	    }
+	    if (!e.touches || e.touches.length === 0) return;
+
+	    const touch = e.touches[0];
+	    createStarBurst({
+	      currentTarget: e.currentTarget,
+	      clientX: touch.clientX,
+	      clientY: touch.clientY,
+	    });
+	  };
 
   return (
     <div className="home">
@@ -101,13 +116,10 @@ const Home = () => {
           <div
             className="hero-image"
             ref={heroImageRef}
-            onClick={createStarBurst}
+	            onClick={createStarBurst}
+	            onTouchStart={createStarBurstFromTouch}
             style={{ cursor: "pointer", position: "relative" }}
           >
-            <img
-              src={GirlWithFlag}
-              alt="Illustration of person celebrating with pride flag"
-            />
             {stars.map((star) => (
               <div
                 key={star.id}
