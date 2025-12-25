@@ -164,8 +164,19 @@
 }
 
 .donate-btn {
-  padding: var(--spacing-sm) var(--spacing-lg);
-  font-size: 0.9rem;
+	padding: var(--spacing-sm) var(--spacing-lg);
+	font-size: 0.9rem;
+	position: relative;
+	border: 2px solid transparent;
+}
+
+/* Subtle animated rainbow border on hover/focus for header donate button */
+.donate-btn:hover,
+.donate-btn:focus-visible {
+	background-image: var(--gradient-purple), var(--gradient-vibrant);
+	background-origin: border-box;
+	background-clip: padding-box, border-box;
+	animation: gradientShift 4s ease infinite;
 }
 
 /* Hamburger Menu */

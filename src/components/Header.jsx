@@ -138,16 +138,16 @@ const Header = () => {
           >
             Donate
           </a>
-          {/* Purple donate button for desktop */}
-          <a
-            href={SITE_CONFIG.donateUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-primary donate-btn"
-            aria-label="Donate Now (opens in new tab)"
-          >
-            Donate Now
-          </a>
+	        {/* Purple donate button for desktop */}
+	        <a
+	          href={SITE_CONFIG.donateUrl}
+	          target="_blank"
+	          rel="noopener noreferrer"
+	          className="btn btn-primary donate-btn"
+	          aria-label="Donate Now (opens in new tab)"
+	        >
+	          Donate Now
+	        </a>
         </div>
 
         <button
