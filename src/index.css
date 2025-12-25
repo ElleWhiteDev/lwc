@@ -104,7 +104,9 @@
 }
 
 html {
-  scroll-behavior: smooth;
+	scroll-behavior: smooth;
+	/* Prevent root from extending wider than the viewport (e.g., on some Android browsers) */
+	overflow-x: hidden;
 }
 
 body {

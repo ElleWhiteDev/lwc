@@ -20,10 +20,15 @@
 
 /* Mission Section */
 .mission-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--spacing-3xl);
-  align-items: center;
+	  display: grid;
+	  /* Use minmax(0, 1fr) to prevent content from forcing overflow */
+	  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	  gap: var(--spacing-3xl);
+	  align-items: center;
+}
+
+.mission-content {
+	  min-width: 0;
 }
 
 .mission-content h2 {
@@ -38,8 +43,10 @@
 }
 
 .mission-image {
-  display: grid;
-  gap: var(--spacing-md);
+	  display: grid;
+	  gap: var(--spacing-md);
+	  /* Allow this grid column to shrink within its track without overflow */
+	  min-width: 0;
 }
 
 .mission-card {
