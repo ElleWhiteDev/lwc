@@ -1,0 +1,284 @@
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-height);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  box-shadow: var(--shadow-sm);
+  z-index: 1000;
+}
+
+.header-container {
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: 0 var(--spacing-lg);
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-lg);
+}
+
+/* Logo Styles */
+.logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.logo-circle {
+  width: 60px;
+  height: 60px;
+  border-radius: var(--radius-full);
+  background: var(--gradient-rainbow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  transition: transform var(--transition-normal);
+}
+
+.logo:hover .logo-circle {
+  transform: scale(1.05);
+}
+
+.logo-text-top {
+  font-size: 0.5rem;
+  font-weight: 700;
+  color: var(--black);
+  line-height: 1;
+}
+
+.logo-text-bottom {
+  font-family: var(--font-script);
+  font-size: 0.65rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+/* Logo letter colors - Rainbow + Progress Pride */
+.logo-text-bottom .ltr-C {
+  color: #e94057;
+} /* Red */
+.logo-text-bottom .ltr-e1 {
+  color: #f27121;
+} /* Orange */
+.logo-text-bottom .ltr-l {
+  color: #f8d800;
+} /* Yellow */
+.logo-text-bottom .ltr-e2 {
+  color: #4caf50;
+} /* Green */
+.logo-text-bottom .ltr-b {
+  color: #2196f3;
+} /* Blue */
+.logo-text-bottom .ltr-r {
+  color: #9c27b0;
+} /* Purple */
+.logo-text-bottom .ltr-a {
+  color: #000000;
+} /* Black */
+.logo-text-bottom .ltr-t {
+  color: #8b4513;
+} /* Brown */
+.logo-text-bottom .ltr-i {
+  color: #ffb6c1;
+} /* Pink */
+.logo-text-bottom .ltr-n {
+  color: #ffffff;
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
+} /* White */
+.logo-text-bottom .ltr-g {
+  color: #00ced1;
+} /* Aqua */
+
+/* Navigation */
+.nav {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-list {
+  display: flex;
+  list-style: none;
+  gap: var(--spacing-xl);
+}
+
+.nav-list a {
+  font-weight: 500;
+  color: var(--dark-gray);
+  padding: var(--spacing-sm) 0;
+  position: relative;
+  transition: color var(--transition-fast);
+}
+
+.nav-list a::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 3px;
+  background: var(--gradient-purple);
+  border-radius: 2px;
+  transition: width var(--transition-normal);
+}
+
+.nav-list a:hover,
+.nav-list a.active {
+  color: var(--primary-purple);
+}
+
+.nav-list a:hover::after,
+.nav-list a.active::after {
+  width: 100%;
+}
+
+/* Header Actions */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.social-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-full);
+  color: var(--primary-purple);
+  background: var(--off-white);
+  transition: all var(--transition-normal);
+}
+
+.social-link:hover {
+  background: var(--primary-purple);
+  color: var(--white);
+  transform: translateY(-2px);
+}
+
+.donate-btn {
+  padding: var(--spacing-sm) var(--spacing-lg);
+  font-size: 0.9rem;
+}
+
+/* Hamburger Menu */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 30px;
+  height: 24px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  z-index: 1001;
+}
+
+.hamburger span {
+  width: 100%;
+  height: 3px;
+  background: var(--primary-purple);
+  border-radius: 2px;
+  transition: all var(--transition-normal);
+}
+
+.hamburger.active span:nth-child(1) {
+  transform: rotate(45deg) translate(6px, 6px);
+}
+
+.hamburger.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.hamburger.active span:nth-child(3) {
+  transform: rotate(-45deg) translate(6px, -6px);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+  .header-container {
+    padding: 0 var(--spacing-md);
+  }
+
+  /* On mobile: Logo | CTA (center) | Hamburger */
+  .header-actions {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    order: 2;
+  }
+
+  .hamburger {
+    display: flex;
+    order: 3;
+  }
+
+  .nav {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: var(--white);
+    padding: var(--spacing-lg) var(--spacing-xl);
+    box-shadow: var(--shadow-md);
+    border-top: 1px solid var(--gray-200);
+    transform: translateY(-10px);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      transform var(--transition-normal),
+      opacity var(--transition-normal);
+    display: block;
+    flex: none;
+    order: 4;
+  }
+
+  .nav-open {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .nav-list {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    align-items: flex-end;
+    width: 100%;
+  }
+
+  .nav-list a {
+    font-size: 1.25rem;
+    padding: var(--spacing-sm) 0;
+    display: block;
+  }
+
+  .header-actions .donate-btn {
+    display: none;
+  }
+
+  /* Show rainbow donate button on mobile */
+  .header-actions .mobile-donate-btn {
+    display: inline-block;
+  }
+}
+
+@media (min-width: 769px) {
+  .header-actions {
+    position: static;
+    opacity: 1;
+    pointer-events: auto;
+    transform: none;
+  }
+
+  .header-actions .mobile-donate-btn {
+    display: none;
+  }
+}

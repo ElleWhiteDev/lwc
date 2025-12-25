@@ -1,0 +1,235 @@
+/* About Hero */
+.about-hero {
+  position: relative;
+  background-color: #480d60;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  padding: var(--spacing-3xl) 0;
+  text-align: center;
+  color: var(--white);
+  overflow: hidden;
+}
+
+.about-hero h1 {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  margin-bottom: var(--spacing-md);
+  color: var(--white);
+}
+
+.about-hero-subtitle {
+  font-size: 1.25rem;
+  opacity: 0.9;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Mission Section */
+.mission-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-3xl);
+  align-items: center;
+}
+
+.mission-content h2 {
+  margin-bottom: var(--spacing-lg);
+  color: var(--primary-purple);
+}
+
+.mission-content p {
+  color: var(--medium-gray);
+  font-size: 1.1rem;
+  line-height: 1.8;
+}
+
+.mission-image {
+  display: grid;
+  gap: var(--spacing-md);
+}
+
+.mission-card {
+  background: var(--white);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  transition: all var(--transition-normal);
+}
+
+.mission-card:hover {
+  transform: translateX(10px);
+  box-shadow: var(--shadow-md);
+}
+
+.mission-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.mission-card h3 {
+  color: var(--primary-purple);
+  margin-bottom: var(--spacing-xs);
+}
+
+.mission-card p {
+  color: var(--medium-gray);
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+/* Values Section */
+.values-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-xl);
+}
+
+.value-card {
+  background: var(--white);
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.value-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--gradient-purple);
+  transform: scaleX(0);
+  transition: transform var(--transition-normal);
+}
+
+.value-card:hover::before {
+  transform: scaleX(1);
+}
+
+.value-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-md);
+}
+
+.value-card h3 {
+  color: var(--primary-purple);
+  margin-bottom: var(--spacing-sm);
+}
+
+.value-card p {
+  color: var(--medium-gray);
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* Board Section */
+.board-intro {
+  text-align: center;
+  max-width: 600px;
+  margin: 0 auto var(--spacing-2xl);
+  color: var(--medium-gray);
+  font-size: 1.1rem;
+}
+
+.board-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--spacing-xl);
+}
+
+.board-card {
+  background: var(--white);
+  padding: var(--spacing-xl);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-normal);
+}
+
+.board-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-purple);
+}
+
+.board-photo {
+  width: 120px;
+  height: 120px;
+  border-radius: var(--radius-full);
+  background: var(--light-gray);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--spacing-md);
+  font-size: 3rem;
+  color: var(--medium-gray);
+  overflow: hidden;
+}
+
+.board-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.board-card h3 {
+  margin-bottom: var(--spacing-xs);
+  color: var(--black);
+}
+
+.board-title {
+  color: var(--primary-purple);
+  font-weight: 500;
+  font-size: 0.95rem;
+  margin: 0;
+}
+
+/* About CTA */
+.about-cta {
+  background: var(--gradient-rainbow);
+  text-align: center;
+}
+
+.about-cta-content h2 {
+  margin-bottom: var(--spacing-md);
+}
+
+.about-cta-content p {
+  max-width: 600px;
+  margin: 0 auto var(--spacing-xl);
+  color: var(--dark-gray);
+  font-size: 1.1rem;
+}
+
+.about-cta-buttons {
+  display: flex;
+  justify-content: center;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+/* Responsive */
+@media (max-width: 992px) {
+  .values-grid,
+  .board-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .mission-grid {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-2xl);
+  }
+
+  .values-grid,
+  .board-grid {
+    grid-template-columns: 1fr;
+  }
+}
