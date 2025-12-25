@@ -7,11 +7,11 @@
 
 .footer-wave {
   position: absolute;
-  /* Slightly overlap the section above to prevent a faint 1px seam */
-  top: -61px;
+  /* Overlap the section above a bit more to avoid any subpixel seam */
+  top: -64px;
   left: 0;
   right: 0;
-  height: 61px;
+  height: 64px;
   color: var(--primary-purple);
   overflow: hidden;
 }
@@ -19,6 +19,8 @@
 .footer-wave svg {
   width: 100%;
   height: 100%;
+  /* Remove inline SVG baseline gap that can create a faint line */
+  display: block;
 }
 
 .footer-content {
