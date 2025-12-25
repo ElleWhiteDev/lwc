@@ -117,6 +117,8 @@ body {
   /* Remove default iOS/Android tap highlight globally to avoid blue
      flash around tappable elements like the hero image */
   -webkit-tap-highlight-color: transparent;
+  /* Prevent any page from becoming wider than the viewport on mobile */
+  overflow-x: hidden;
 }
 
 #root {
