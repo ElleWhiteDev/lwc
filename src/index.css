@@ -23,6 +23,19 @@
   --dark-gray: #343a40;
   --black: #1a1a2e;
 
+  /* Logo letter palette - Rainbow + Progress Pride */
+  --logo-letter-C: #e94057; /* Red */
+  --logo-letter-e1: #f27121; /* Orange */
+  --logo-letter-l: #f8d800; /* Yellow */
+  --logo-letter-e2: #4caf50; /* Green */
+  --logo-letter-b: #2196f3; /* Blue */
+  --logo-letter-r: #9c27b0; /* Purple */
+  --logo-letter-a: #000000; /* Black */
+  --logo-letter-t: #8b4513; /* Brown */
+  --logo-letter-i: #ffb6c1; /* Pink */
+  --logo-letter-n: #ffffff; /* White */
+  --logo-letter-g: #00ced1; /* Aqua */
+
   /* Gradients */
   --gradient-rainbow: linear-gradient(
     135deg,
@@ -253,6 +266,32 @@ img {
 .section-title span {
   font-family: var(--font-script-alt);
   color: var(--primary-purple);
+}
+
+/* Shared hero background styling */
+.hero,
+.about-hero,
+.events-hero {
+	position: relative;
+	background-color: #480d60;
+	background-size: cover;
+	background-position: center;
+	background-repeat: no-repeat;
+	overflow: hidden;
+}
+
+/* Shared card base styling */
+.service-card,
+.mission-card,
+.value-card,
+.board-card,
+.news-card,
+.upcoming-event-card,
+.past-event-card {
+	background: var(--white);
+	border-radius: var(--radius-lg);
+	box-shadow: var(--shadow-sm);
+	transition: all var(--transition-normal);
 }
 
 /* Utility Classes */

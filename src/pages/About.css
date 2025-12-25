@@ -1,14 +1,8 @@
 /* About Hero */
 .about-hero {
-  position: relative;
-  background-color: #480d60;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
   padding: var(--spacing-3xl) 0;
   text-align: center;
   color: var(--white);
-  overflow: hidden;
 }
 
 .about-hero h1 {
@@ -49,14 +43,10 @@
 }
 
 .mission-card {
-  background: var(--white);
   padding: var(--spacing-lg);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
   display: flex;
   align-items: center;
   gap: var(--spacing-md);
-  transition: all var(--transition-normal);
 }
 
 .mission-card:hover {
@@ -88,11 +78,7 @@
 }
 
 .value-card {
-  background: var(--white);
   padding: var(--spacing-xl);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-sm);
-  transition: all var(--transition-normal);
   position: relative;
   overflow: hidden;
 }
@@ -145,12 +131,8 @@
 }
 
 .board-card {
-  background: var(--white);
   padding: var(--spacing-xl);
-  border-radius: var(--radius-lg);
   text-align: center;
-  box-shadow: var(--shadow-sm);
-  transition: all var(--transition-normal);
 }
 
 .board-card:hover {

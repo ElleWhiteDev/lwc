@@ -1,14 +1,8 @@
 /* Hero Section */
 .hero {
-  position: relative;
   min-height: calc(100vh - var(--header-height));
   display: flex;
   align-items: center;
-  background-color: #480d60;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  overflow: hidden;
 }
 
 .hero-container {
@@ -101,33 +95,6 @@
   display: flex;
   gap: var(--spacing-md);
   flex-wrap: wrap;
-}
-
-/* Rainbow Donate Button - Homepage Hero Only */
-.btn-rainbow {
-  background: var(--gradient-vibrant);
-  color: var(--white);
-  background-size: 200% 200%;
-  animation: gradientShift 3s ease infinite;
-  box-shadow: 0 4px 15px rgba(233, 64, 87, 0.4);
-}
-
-.btn-rainbow:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(233, 64, 87, 0.5);
-  color: var(--white);
-}
-
-@keyframes gradientShift {
-  0% {
-    background-position: 0% 50%;
-  }
-  50% {
-    background-position: 100% 50%;
-  }
-  100% {
-    background-position: 0% 50%;
-  }
 }
 
 .hero-image {
@@ -231,12 +198,8 @@
 }
 
 .service-card {
-  background: var(--white);
   padding: var(--spacing-xl);
-  border-radius: var(--radius-lg);
   text-align: center;
-  box-shadow: var(--shadow-sm);
-  transition: all var(--transition-normal);
 }
 
 .service-card:hover {
@@ -267,11 +230,7 @@
 }
 
 .news-card {
-  background: var(--white);
-  border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  transition: all var(--transition-normal);
 }
 
 .news-card:hover {

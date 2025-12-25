@@ -64,40 +64,40 @@
   line-height: 1;
 }
 
-/* Footer logo letter colors - Rainbow + Progress Pride */
+/* Footer logo letter colors - Rainbow + Progress Pride (reusing global palette) */
 .footer-logo .logo-text-bottom .ltr-C {
-  color: #e94057;
+	color: var(--logo-letter-C);
 } /* Red */
 .footer-logo .logo-text-bottom .ltr-e1 {
-  color: #f27121;
+	color: var(--logo-letter-e1);
 } /* Orange */
 .footer-logo .logo-text-bottom .ltr-l {
-  color: #f8d800;
+	color: var(--logo-letter-l);
 } /* Yellow */
 .footer-logo .logo-text-bottom .ltr-e2 {
-  color: #4caf50;
+	color: var(--logo-letter-e2);
 } /* Green */
 .footer-logo .logo-text-bottom .ltr-b {
-  color: #2196f3;
+	color: var(--logo-letter-b);
 } /* Blue */
 .footer-logo .logo-text-bottom .ltr-r {
-  color: #9c27b0;
+	color: var(--logo-letter-r);
 } /* Purple */
 .footer-logo .logo-text-bottom .ltr-a {
-  color: #000000;
+	color: var(--logo-letter-a);
 } /* Black */
 .footer-logo .logo-text-bottom .ltr-t {
-  color: #8b4513;
+	color: var(--logo-letter-t);
 } /* Brown */
 .footer-logo .logo-text-bottom .ltr-i {
-  color: #ffb6c1;
+	color: var(--logo-letter-i);
 } /* Pink */
 .footer-logo .logo-text-bottom .ltr-n {
-  color: #ffffff;
-  text-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
+	color: var(--logo-letter-n);
+	text-shadow: 0 0 1px rgba(0, 0, 0, 0.5);
 } /* White */
 .footer-logo .logo-text-bottom .ltr-g {
-  color: #00ced1;
+	color: var(--logo-letter-g);
 } /* Aqua */
 
 .footer-tagline {

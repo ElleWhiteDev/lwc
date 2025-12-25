@@ -1,14 +1,8 @@
 /* Events Hero */
 .events-hero {
-  position: relative;
-  background-color: #480d60;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
   padding: var(--spacing-3xl) 0;
   text-align: center;
   color: var(--white);
-  overflow: hidden;
 }
 
 .events-hero h1 {
@@ -34,13 +28,9 @@
 }
 
 .upcoming-event-card {
-  background: var(--white);
-  border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
   display: grid;
   grid-template-columns: 200px 1fr;
-  transition: all var(--transition-normal);
 }
 
 .upcoming-event-card:hover {
@@ -121,11 +111,7 @@
 }
 
 .past-event-card {
-  background: var(--white);
-  border-radius: var(--radius-lg);
   overflow: hidden;
-  box-shadow: var(--shadow-sm);
-  transition: all var(--transition-normal);
 }
 
 .past-event-card:hover {
