@@ -7,10 +7,11 @@
 
 .footer-wave {
   position: absolute;
-  top: -60px;
+  /* Slightly overlap the section above to prevent a faint 1px seam */
+  top: -61px;
   left: 0;
   right: 0;
-  height: 60px;
+  height: 61px;
   color: var(--primary-purple);
   overflow: hidden;
 }
