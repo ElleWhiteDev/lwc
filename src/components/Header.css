@@ -176,7 +176,28 @@
 	background-image: var(--gradient-purple), var(--gradient-vibrant);
 	background-origin: border-box;
 	background-clip: padding-box, border-box;
-	animation: gradientShift 4s ease infinite;
+	background-size: 200% 200%, 200% 200%;
+	animation: headerBorderShift 4s ease infinite;
+}
+
+/* Mobile header donate button: always use the hover rainbow-border treatment */
+.header-actions .mobile-donate-btn {
+	border: 2px solid transparent;
+	background-image: var(--gradient-purple), var(--gradient-vibrant);
+	background-origin: border-box;
+	background-clip: padding-box, border-box;
+	background-size: 200% 200%, 200% 200%;
+	animation: headerBorderShift 4s ease infinite;
+}
+
+@keyframes headerBorderShift {
+	0%,
+	100% {
+		background-position: 0% 50%, 0% 50%;
+	}
+	50% {
+		background-position: 0% 50%, 100% 50%;
+	}
 }
 
 /* Hamburger Menu */

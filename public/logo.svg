@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="A Life Worth Celebrating logo badge">
+  <defs>
+    <!-- Match the header's pastel rainbow circle -->
+    <linearGradient id="logoRainbow" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FFD6E0" />
+      <stop offset="20%" stop-color="#FFECD2" />
+      <stop offset="40%" stop-color="#FFFFD6" />
+      <stop offset="60%" stop-color="#D6FFE0" />
+      <stop offset="80%" stop-color="#D6E8FF" />
+      <stop offset="100%" stop-color="#E8D6FF" />
+    </linearGradient>
+  </defs>
+
+  <!-- Circular logo background -->
+  <circle cx="32" cy="32" r="28" fill="url(#logoRainbow)" />
+
+  <!-- Top line: "A Life Worth" -->
+  <text
+    x="32"
+    y="24"
+    text-anchor="middle"
+    font-family="Poppins, system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+    font-size="8"
+    fill="#1a1a2e">
+    A Life Worth
+  </text>
+
+  <!-- Bottom script line: "Celebrating" with rainbow letters -->
+  <text
+    x="32"
+    y="40"
+    text-anchor="middle"
+    font-family="'Dancing Script', 'Pacifico', cursive, system-ui"
+    font-size="11"
+    letter-spacing="0.2">
+    <tspan fill="#e94057">C</tspan>
+    <tspan fill="#f27121">e</tspan>
+    <tspan fill="#f8d800">l</tspan>
+    <tspan fill="#4caf50">e</tspan>
+    <tspan fill="#2196f3">b</tspan>
+    <tspan fill="#9c27b0">r</tspan>
+    <tspan fill="#000000">a</tspan>
+    <tspan fill="#8b4513">t</tspan>
+    <tspan fill="#ffb6c1">i</tspan>
+    <tspan fill="#ffffff" stroke="#000000" stroke-width="0.25">n</tspan>
+    <tspan fill="#00ced1">g</tspan>
+  </text>
+</svg>
