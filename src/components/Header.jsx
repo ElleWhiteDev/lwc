@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { SITE_CONFIG } from "../config/siteConfig";
+import { useSiteConfig } from "../config/siteConfig.jsx";
 import LogoWordmark from "./LogoWordmark";
 import "./Header.css";
 
 const Header = () => {
+  const siteConfig = useSiteConfig();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -98,7 +99,7 @@ const Header = () => {
 
         <div className="header-actions">
           <a
-            href={SITE_CONFIG.facebookUrl}
+            href={siteConfig.facebookUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="social-link"
@@ -116,7 +117,7 @@ const Header = () => {
           </a>
 	        {/* Rainbow-border donate button for mobile (matches header hover style) */}
 	        <a
-	          href={SITE_CONFIG.donateUrl}
+	          href={siteConfig.donateUrl}
 	          target="_blank"
 	          rel="noopener noreferrer"
 	          className="btn btn-primary mobile-donate-btn"
@@ -126,7 +127,7 @@ const Header = () => {
 	        </a>
 	        {/* Purple donate button for desktop */}
 	        <a
-	          href={SITE_CONFIG.donateUrl}
+	          href={siteConfig.donateUrl}
 	          target="_blank"
 	          rel="noopener noreferrer"
 	          className="btn btn-primary donate-btn"

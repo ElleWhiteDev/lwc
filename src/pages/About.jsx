@@ -1,8 +1,62 @@
-import { SITE_CONFIG } from "../config/siteConfig";
+import { useState, useEffect } from "react";
+import { useSiteConfig } from "../config/siteConfig.jsx";
 import "./About.css";
 import LWCHomeBackground from "../assets/images/LWCHomeBackground.svg";
 
 const About = () => {
+  const siteConfig = useSiteConfig();
+  const [aboutContent, setAboutContent] = useState(null);
+  const [boardMembers, setBoardMembers] = useState([]);
+
+  useEffect(() => {
+    fetch("/api/content/about")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch about content");
+        return res.json();
+      })
+      .then((data) => {
+        if (data.data) {
+          setAboutContent(data.data);
+        }
+      })
+      .catch((err) => {
+        console.error("Error loading about content:", err);
+      });
+
+    // Fetch board members
+    fetch("/api/board-members")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to fetch board members");
+        return res.json();
+      })
+      .then((data) => {
+        if (data.boardMembers) {
+          setBoardMembers(data.boardMembers);
+        }
+      })
+      .catch((err) => {
+        console.error("Error loading board members:", err);
+      });
+  }, []);
+
+  // Content with fallbacks
+  const heroSubtitle =
+    aboutContent?.heroSubtitle ||
+    "Learn more about our mission, values, and the community we're building together.";
+
+  const missionHeading = aboutContent?.missionHeading || "Our Mission";
+  const missionParagraph1 =
+    aboutContent?.missionParagraph1 ||
+    "A Life Worth Celebrating is a nonprofit organization dedicated to creating inclusive spaces where everyone feels valued, celebrated, and supported. We believe that every life deserves to be honored and that together, we can build a more loving and accepting community.";
+  const missionParagraph2 =
+    aboutContent?.missionParagraph2 ||
+    "Through events, volunteer programs, and community outreach, we work to foster connection, spread joy, and advocate for equality. Our goal is simple: to make our community a place where every person can live authentically and proudly.";
+
+  const ctaHeading = aboutContent?.ctaHeading || "Get Involved";
+  const ctaBody =
+    aboutContent?.ctaBody ||
+    "Whether you want to volunteer, attend an event, or support our cause, there are many ways to get involved with A Life Worth Celebrating.";
+
   return (
     <div className="about">
       {/* Hero Section */}
@@ -13,10 +67,7 @@ const About = () => {
       >
         <div className="container">
           <h1 id="about-title">About Us</h1>
-          <p className="about-hero-subtitle">
-            Learn more about our mission, values, and the community we&apos;re
-            building together.
-          </p>
+          <p className="about-hero-subtitle">{heroSubtitle}</p>
         </div>
       </section>
 
@@ -25,20 +76,9 @@ const About = () => {
         <div className="container">
           <div className="mission-grid">
             <div className="mission-content">
-              <h2>Our Mission</h2>
-              <p>
-                A Life Worth Celebrating is a nonprofit organization dedicated
-                to creating inclusive spaces where everyone feels valued,
-                celebrated, and supported. We believe that every life deserves
-                to be honored and that together, we can build a more loving and
-                accepting community.
-              </p>
-              <p>
-                Through events, volunteer programs, and community outreach, we
-                work to foster connection, spread joy, and advocate for
-                equality. Our goal is simple: to make our community a place
-                where every person can live authentically and proudly.
-              </p>
+              <h2>{missionHeading}</h2>
+              <p>{missionParagraph1}</p>
+              <p>{missionParagraph2}</p>
             </div>
             <div className="mission-image">
               <div className="mission-card">
@@ -107,34 +147,29 @@ const About = () => {
             guide our mission.
           </p>
           <div className="board-grid">
-            <div className="board-card">
-              <div className="board-photo">
-                <span>👤</span>
-              </div>
-              <h3>Board Member Name</h3>
-              <p className="board-title">President</p>
-            </div>
-            <div className="board-card">
-              <div className="board-photo">
-                <span>👤</span>
-              </div>
-              <h3>Board Member Name</h3>
-              <p className="board-title">Vice President</p>
-            </div>
-            <div className="board-card">
-              <div className="board-photo">
-                <span>👤</span>
-              </div>
-              <h3>Board Member Name</h3>
-              <p className="board-title">Treasurer</p>
-            </div>
-            <div className="board-card">
-              <div className="board-photo">
-                <span>👤</span>
-              </div>
-              <h3>Board Member Name</h3>
-              <p className="board-title">Secretary</p>
-            </div>
+            {boardMembers.length > 0 ? (
+              boardMembers.map((member) => (
+                <div key={member.id} className="board-card">
+                  <div className="board-photo">
+                    {member.image_url ? (
+                      <img
+                        src={member.image_url}
+                        alt={member.name}
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                    ) : (
+                      <span>👤</span>
+                    )}
+                  </div>
+                  <h3>{member.name}</h3>
+                  <p className="board-title">{member.title}</p>
+                </div>
+              ))
+            ) : (
+              <p style={{ gridColumn: "1 / -1", textAlign: "center", color: "var(--color-text-light)" }}>
+                No board members to display yet.
+              </p>
+            )}
           </div>
         </div>
       </section>
@@ -146,15 +181,11 @@ const About = () => {
       >
         <div className="container">
           <div className="about-cta-content">
-            <h2 id="about-cta-heading">Want to Join Our Mission?</h2>
-            <p>
-              Whether you want to volunteer, attend events, or support our
-              cause, there are many ways to get involved with A Life Worth
-              Celebrating.
-            </p>
+            <h2 id="about-cta-heading">{ctaHeading}</h2>
+            <p>{ctaBody}</p>
             <div className="about-cta-buttons">
               <a
-                href={SITE_CONFIG.donateUrl}
+                href={siteConfig.donateUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-rainbow"
@@ -163,7 +194,7 @@ const About = () => {
                 Make a Donation
               </a>
               <a
-                href={SITE_CONFIG.facebookUrl}
+                href={siteConfig.facebookUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn btn-cta-secondary"

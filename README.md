@@ -77,56 +77,260 @@ To preview the production build locally:
 npm run preview
 ```
 
-## 🌐 Deployment
+## 🚀 Local Development Setup
 
-### Deploying to Heroku
+This project is now a **full-stack application** with a Node.js/Express backend, PostgreSQL database, and React frontend.
 
-This project is configured for easy deployment to Heroku using the static buildpack.
+### Prerequisites
 
-1. **Install the Heroku CLI**
+- **Node.js** >= 20.0.0
+- **npm** >= 10.0.0
+- **PostgreSQL** (optional for local development - you can use the Heroku Postgres database)
+
+### Installation
+
+1. **Clone the repository**
 
    ```bash
-   # macOS
-   brew tap heroku/brew && brew install heroku
-
-   # Or download from https://devcenter.heroku.com/articles/heroku-cli
+   git clone https://github.com/ElleWhiteDev/lwc.git
+   cd lwc
    ```
 
-2. **Login to Heroku**
+2. **Install dependencies**
+
+   ```bash
+   npm install
+   ```
+
+3. **Configure environment variables**
+
+   Copy `.env.example` to `.env` and update the values:
+
+   ```bash
+   cp .env.example .env
+   ```
+
+   Edit `.env` with your configuration:
+
+   ```env
+   # Database - Use your Heroku Postgres URL or local PostgreSQL
+   DATABASE_URL=postgres://username:password@host:port/database
+
+   # JWT Secret - Generate a secure random string
+   JWT_SECRET=your-secret-key-here
+
+   # Admin User - This account will be created automatically on first server start
+   ADMIN_EMAIL=your-email@example.com
+   ADMIN_PASSWORD=your-secure-password
+   ADMIN_NAME=Your Name
+
+   # Environment
+   NODE_ENV=development
+   PORT=3000
+   ```
+
+   **Note**: The `.env` file in this repo is already configured to use the Heroku Postgres database for local development. You can use it as-is or set up a local PostgreSQL instance.
+
+4. **Start the development servers**
+
+   You need **two terminal windows**:
+
+   **Terminal 1 - Backend Server:**
+   ```bash
+   npm start
+   ```
+   This starts the Express server on `http://localhost:3000`
+
+   **Terminal 2 - Frontend Dev Server:**
+   ```bash
+   npm run dev
+   ```
+   This starts the Vite dev server on `http://localhost:5173`
+
+5. **Access the application**
+
+   Open your browser to `http://localhost:5173`
+
+   - Public pages: `/`, `/about`, `/events`
+   - Admin login: `/login`
+   - Admin panel: `/admin` (requires authentication)
+
+6. **Login as admin**
+
+   Use the credentials you set in your `.env` file:
+   - Email: `ADMIN_EMAIL`
+   - Password: `ADMIN_PASSWORD`
+
+### Database Initialization
+
+The database tables are created automatically when you start the backend server for the first time. The admin user specified in your `.env` file will also be seeded automatically.
+
+## 🌐 Deploying to Heroku
+
+This application is configured to run as a single Node.js app on Heroku, serving both the API and the built frontend.
+
+### Prerequisites
+
+- Heroku CLI installed ([download here](https://devcenter.heroku.com/articles/heroku-cli))
+- Heroku account
+- Git repository
+
+### Deployment Steps
+
+1. **Login to Heroku**
 
    ```bash
    heroku login
    ```
 
-3. **Create a new Heroku app**
+2. **Verify your Heroku app and Postgres addon**
 
+   Your app: `a-life-worth-celebrating`
+   Postgres addon: `postgresql-clean-40515`
+
+   Verify the addon is attached:
    ```bash
-   heroku create your-app-name
+   heroku addons --app a-life-worth-celebrating
    ```
 
-4. **Add the static buildpack**
+3. **Set environment variables on Heroku**
 
    ```bash
-   heroku buildpacks:add heroku/nodejs
-   heroku buildpacks:add https://github.com/heroku/heroku-buildpack-static.git
+   # JWT Secret - Generate a secure random string (e.g., openssl rand -base64 32)
+   heroku config:set JWT_SECRET="your-production-secret-key" --app a-life-worth-celebrating
+
+   # Admin account credentials
+   heroku config:set ADMIN_EMAIL="your-email@example.com" --app a-life-worth-celebrating
+   heroku config:set ADMIN_PASSWORD="your-secure-password" --app a-life-worth-celebrating
+   heroku config:set ADMIN_NAME="Your Name" --app a-life-worth-celebrating
+
+   # Environment
+   heroku config:set NODE_ENV="production" --app a-life-worth-celebrating
    ```
 
-5. **Deploy**
+   **Note**: `DATABASE_URL` is automatically set by the Heroku Postgres addon, so you don't need to set it manually.
+
+4. **Verify buildpack is set to Node.js**
 
    ```bash
+   heroku buildpacks --app a-life-worth-celebrating
+   ```
+
+   If it's not set or shows the static buildpack, update it:
+   ```bash
+   heroku buildpacks:clear --app a-life-worth-celebrating
+   heroku buildpacks:set heroku/nodejs --app a-life-worth-celebrating
+   ```
+
+5. **Deploy your code**
+
+   ```bash
+   git add .
+   git commit -m "Add full-stack CMS backend"
    git push heroku main
    ```
 
-6. **Open your deployed site**
+   Heroku will automatically:
+   - Install dependencies
+   - Run `npm run build` (via the `heroku-postbuild` script)
+   - Start the server with `npm start`
+
+6. **Monitor the deployment**
+
    ```bash
-   heroku open
+   heroku logs --tail --app a-life-worth-celebrating
    ```
 
-### Alternative Deployment Options
+7. **Open your deployed application**
 
-- **Netlify**: Connect your GitHub repo and deploy automatically
-- **Vercel**: Import your GitHub repo for instant deployment
-- **GitHub Pages**: Use `gh-pages` package for static hosting
+   ```bash
+   heroku open --app a-life-worth-celebrating
+   ```
+
+   Or visit: `https://a-life-worth-celebrating.herokuapp.com`
+
+8. **Test the admin panel**
+
+   - Navigate to `/login`
+   - Login with your `ADMIN_EMAIL` and `ADMIN_PASSWORD`
+   - Access the admin panel at `/admin`
+
+### Environment Variables Reference
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `DATABASE_URL` | PostgreSQL connection string | Yes (auto-set by Heroku) |
+| `JWT_SECRET` | Secret key for signing JWT tokens | Yes |
+| `ADMIN_EMAIL` | Email for the main admin account | Yes |
+| `ADMIN_PASSWORD` | Password for the main admin account | Yes |
+| `ADMIN_NAME` | Display name for the main admin | Yes |
+| `NODE_ENV` | Environment (`development` or `production`) | Yes |
+| `PORT` | Server port (auto-set by Heroku) | No |
+
+## 📝 Content Management
+
+### Admin Panel Features
+
+Once logged in to `/admin`, you can:
+
+1. **Content Tab**: Edit JSON content for:
+   - `home` - Homepage content (hero subtitle, highlights, CTA text)
+   - `about` - About page content (mission paragraphs, CTA text)
+   - `siteConfig` - Site-wide configuration (site name, tagline, contact email, social links)
+
+2. **Events Tab**: Create, edit, publish/unpublish, and delete events
+   - Events marked as "published" appear on the public `/events` page
+   - Unpublished events are only visible in the admin panel
+
+3. **Users Tab** (main admin only): Create, edit, and delete editor accounts
+   - Only the main admin (matching `ADMIN_EMAIL`) can manage users
+   - Other editors can only edit content and events
+
+4. **Audit Log Tab**: View all changes made by all users
+   - Tracks who made what changes and when
+   - Shows before/after data for all modifications
+
+5. **My Profile Tab**: Update your own name, email, and password
+
+### Example Content JSON Structures
+
+**Home Content (`/api/content/home`):**
+```json
+{
+  "heroSubtitle": "A nonprofit creating inclusive spaces where everyone feels valued and celebrated.",
+  "highlightTitle": "What We Do",
+  "highlightBody": "We create inclusive spaces and events...",
+  "ctaHeading": "Join Our Community",
+  "ctaBody": "Be part of something bigger..."
+}
+```
+
+**About Content (`/api/content/about`):**
+```json
+{
+  "heroSubtitle": "Learn more about our mission...",
+  "missionHeading": "Our Mission",
+  "missionParagraph1": "A Life Worth Celebrating is a nonprofit...",
+  "missionParagraph2": "Through events, volunteer programs...",
+  "ctaHeading": "Get Involved",
+  "ctaBody": "Ready to make a difference?"
+}
+```
+
+**Site Config (`/api/content/siteConfig`):**
+```json
+{
+  "siteName": "A Life Worth Celebrating",
+  "siteTagline": "Creating inclusive spaces for everyone",
+  "contactEmail": "hello@alifeworthcelebrating.org",
+  "socialLinks": {
+    "facebook": "https://facebook.com/yourpage",
+    "instagram": "https://instagram.com/yourpage",
+    "twitter": "https://twitter.com/yourpage"
+  },
+  "donateUrl": "https://donate.stripe.com/your-link"
+}
+```
 
 ## 📁 Project Structure
 

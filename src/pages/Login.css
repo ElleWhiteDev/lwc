@@ -1,0 +1,112 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2xl) var(--spacing-md);
+  background: linear-gradient(135deg, var(--color-accent) 0%, #764ba2 100%);
+}
+
+.login-page .container {
+  max-width: 450px;
+  width: 100%;
+}
+
+.login-page h1 {
+  color: var(--white);
+  text-align: center;
+  margin-bottom: var(--spacing-2xl);
+  font-size: 2.5rem;
+}
+
+.login-form {
+  background: var(--admin-card-bg);
+  padding: var(--spacing-2xl);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+}
+
+.login-form .form-field {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: var(--spacing-lg);
+}
+
+.login-form .form-field span {
+  font-weight: var(--form-label-weight);
+  margin-bottom: var(--spacing-sm);
+  color: var(--form-label-color);
+  font-size: 0.95rem;
+}
+
+.login-form input {
+  padding: var(--form-input-padding);
+  border: var(--form-input-border);
+  border-radius: var(--form-input-border-radius);
+  font-size: 1rem;
+  transition: var(--transition-normal);
+  font-family: inherit;
+}
+
+.login-form input:focus {
+  outline: none;
+  border-color: var(--color-border-focus);
+  box-shadow: var(--form-input-focus-shadow);
+}
+
+.login-form .form-error {
+  background: var(--color-error-bg);
+  color: var(--color-error-text);
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-lg);
+  font-size: 0.9rem;
+  border-left: 4px solid var(--color-error);
+}
+
+.login-form .btn {
+  width: 100%;
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: 1.1rem;
+  margin-top: var(--spacing-md);
+}
+
+.login-form .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper input {
+  flex: 1;
+  padding-right: 45px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 12px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--spacing-xs);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-light);
+  transition: var(--transition-fast);
+}
+
+.password-toggle:hover {
+  color: var(--color-primary);
+}
+
+.password-toggle:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}

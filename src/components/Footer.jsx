@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
 import "./Footer.css";
 import LogoWordmark from "./LogoWordmark";
 
@@ -25,7 +26,7 @@ const ContactForm = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {};
 
@@ -42,8 +43,26 @@ const ContactForm = () => {
       return;
     }
 
-    setSubmitted(true);
-    setFormData({ name: "", email: "", message: "" });
+    try {
+      const response = await fetch("/api/auth/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.message || "Failed to send message");
+      }
+
+      setSubmitted(true);
+      setFormData({ name: "", email: "", message: "" });
+    } catch (error) {
+      console.error("Error sending contact form:", error);
+      setErrors({ message: error.message || "Failed to send message. Please try again." });
+    }
   };
 
   if (submitted) {
@@ -139,6 +158,7 @@ const ContactForm = () => {
 
 const Footer = () => {
   const { pathname } = useLocation();
+  const { user } = useAuth();
 
   return (
     <footer className="footer" id="footer" role="contentinfo">
@@ -177,6 +197,11 @@ const Footer = () => {
           <p>
             © {new Date().getFullYear()} A Life Worth Celebrating, Inc. All
             rights reserved.
+            {user ? (
+              <> · <Link to="/admin">Admin</Link></>
+            ) : (
+              <> · <Link to="/login">Login</Link></>
+            )}
           </p>
         </div>
       </div>

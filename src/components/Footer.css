@@ -212,6 +212,17 @@
   font-size: 0.9rem;
 }
 
+.footer-bottom a {
+  color: #ffffff;
+  text-decoration: underline;
+  opacity: 1;
+  font-weight: 500;
+}
+
+.footer-bottom a:hover {
+  color: var(--color-accent);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .footer-grid {

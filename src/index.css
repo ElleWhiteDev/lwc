@@ -95,6 +95,53 @@
   /* Container */
   --container-max: 1200px;
   --header-height: 80px;
+
+  /* Semantic Color Tokens */
+  --color-primary: var(--primary-purple);
+  --color-primary-dark: var(--primary-purple-dark);
+  --color-primary-light: var(--primary-purple-light);
+  --color-accent: #667eea;
+  --color-text: var(--dark-gray);
+  --color-text-light: var(--medium-gray);
+  --color-background: var(--white);
+  --color-background-alt: var(--off-white);
+  --color-border: #e0e0e0;
+  --color-border-focus: var(--color-accent);
+
+  /* Form Tokens */
+  --form-input-padding: var(--spacing-md);
+  --form-input-border: 2px solid var(--color-border);
+  --form-input-border-radius: var(--radius-md);
+  --form-input-focus-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  --form-label-weight: 600;
+  --form-label-color: var(--color-text);
+
+  /* Button Tokens */
+  --btn-padding: var(--spacing-md) var(--spacing-lg);
+  --btn-border-radius: var(--radius-md);
+  --btn-font-weight: 600;
+  --btn-transition: all var(--transition-fast);
+
+  /* Status Colors */
+  --color-success: #28a745;
+  --color-success-bg: #d4edda;
+  --color-success-text: #155724;
+  --color-error: #dc3545;
+  --color-error-bg: #f8d7da;
+  --color-error-text: #721c24;
+  --color-warning: #ffc107;
+  --color-warning-bg: #fff3cd;
+  --color-warning-text: #856404;
+  --color-info: #17a2b8;
+  --color-info-bg: #d1ecf1;
+  --color-info-text: #0c5460;
+
+  /* Admin Panel Tokens */
+  --admin-bg: #f5f5f5;
+  --admin-card-bg: var(--white);
+  --admin-card-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --admin-tab-active-color: var(--color-accent);
+  --admin-tab-border: 3px solid transparent;
 }
 
 * {
@@ -176,6 +223,18 @@ img {
   height: auto;
 }
 
+/* Hide number input spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 .container {
   width: 100%;
   max-width: var(--container-max);
@@ -213,16 +272,15 @@ img {
 }
 
 .btn-rainbow {
-  background: var(--gradient-vibrant);
+  background: #D4A017;
   color: var(--white);
-  background-size: 200% 200%;
-  animation: gradientShift 3s ease infinite;
-  box-shadow: 0 4px 15px rgba(233, 64, 87, 0.4);
+  box-shadow: 0 4px 15px rgba(212, 160, 23, 0.4);
 }
 
 .btn-rainbow:hover {
+  background: #B8860B;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(233, 64, 87, 0.5);
+  box-shadow: 0 6px 20px rgba(212, 160, 23, 0.5);
   color: var(--white);
 }
 
@@ -248,6 +306,50 @@ img {
 .btn-cta-secondary-dark:hover {
   background: var(--white);
   color: var(--primary-purple);
+}
+
+/* Secondary Button */
+.btn-secondary {
+  background: var(--medium-gray);
+  color: var(--white);
+}
+
+.btn-secondary:hover {
+  background: var(--dark-gray);
+  color: var(--white);
+}
+
+/* Success Button */
+.btn-success {
+  background: var(--color-success);
+  color: var(--white);
+}
+
+.btn-success:hover {
+  background: #218838;
+  color: var(--white);
+}
+
+/* Warning Button */
+.btn-warning {
+  background: #ffc107;
+  color: var(--dark-gray);
+}
+
+.btn-warning:hover {
+  background: #e0a800;
+  color: var(--dark-gray);
+}
+
+/* Danger Button */
+.btn-danger {
+  background: var(--color-error);
+  color: var(--white);
+}
+
+.btn-danger:hover {
+  background: #c82333;
+  color: var(--white);
 }
 
 @keyframes gradientShift {

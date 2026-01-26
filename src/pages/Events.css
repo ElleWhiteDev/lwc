@@ -18,29 +18,29 @@
   margin: 0 auto;
 }
 
-/* Upcoming Events - Expanded Card Layout */
+/* Upcoming Events - Grid Card Layout (matching News cards) */
 .upcoming-events-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--spacing-xl);
-  max-width: 900px;
-  margin: 0 auto;
 }
 
 .upcoming-event-card {
   overflow: hidden;
-  display: grid;
-  grid-template-columns: 200px 1fr;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
 .upcoming-event-card:hover {
-  transform: translateY(-3px);
+  transform: translateY(-5px);
   box-shadow: var(--shadow-md);
 }
 
 .upcoming-event-image {
+  height: 180px;
   background: var(--gradient-purple);
-  min-height: 180px;
+  background-size: cover;
+  background-position: center;
 }
 
 .upcoming-event-card:nth-child(2) .upcoming-event-image {
@@ -56,30 +56,29 @@
 }
 
 .upcoming-event-content {
-  padding: var(--spacing-xl);
-  display: flex;
-  flex-direction: column;
+  padding: var(--spacing-lg);
 }
 
 .upcoming-event-date {
-  display: inline-block;
+  display: block;
   color: var(--primary-purple);
   font-size: 0.85rem;
   font-weight: 600;
-  margin-bottom: var(--spacing-xs);
+  margin-bottom: var(--spacing-sm);
 }
 
 .upcoming-event-card h3 {
   margin-bottom: var(--spacing-sm);
   font-size: 1.25rem;
   color: var(--black);
+  line-height: 1.3;
 }
 
 .upcoming-event-details {
   display: flex;
-  gap: var(--spacing-lg);
+  flex-direction: column;
+  gap: var(--spacing-xs);
   margin-bottom: var(--spacing-md);
-  flex-wrap: wrap;
 }
 
 .upcoming-event-time,
@@ -88,7 +87,7 @@
   align-items: center;
   gap: var(--spacing-xs);
   color: var(--medium-gray);
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   margin: 0;
 }
 
@@ -97,10 +96,25 @@
 }
 
 .upcoming-event-description {
-  color: var(--dark-gray);
+  color: var(--medium-gray);
   font-size: 0.95rem;
   line-height: 1.6;
-  margin: 0;
+  margin: 0 0 var(--spacing-md) 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.event-read-more {
+  font-weight: 600;
+  color: var(--primary-purple);
+  font-size: 0.95rem;
+}
+
+.event-read-more:hover {
+  color: var(--primary-purple-dark);
 }
 
 /* Past Events */
@@ -199,26 +213,60 @@
 
 /* Responsive */
 @media (max-width: 992px) {
+  .upcoming-events-list {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
   .past-events-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 768px) {
-  .upcoming-event-card {
+  .upcoming-events-list {
     grid-template-columns: 1fr;
-  }
-
-  .upcoming-event-image {
-    min-height: 120px;
-  }
-
-  .upcoming-event-details {
-    flex-direction: column;
-    gap: var(--spacing-xs);
   }
 
   .past-events-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* Modal Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Modal Scrollbar Styling */
+.event-modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.event-modal-content::-webkit-scrollbar-track {
+  background: var(--light-gray);
+}
+
+.event-modal-content::-webkit-scrollbar-thumb {
+  background: var(--primary-purple);
+  border-radius: 4px;
+}
+
+.event-modal-content::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-purple-dark);
 }
