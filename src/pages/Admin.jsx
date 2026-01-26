@@ -2463,14 +2463,453 @@ function BoardMembersSection() {
 	);
 }
 
+// Newsletter Section - Send newsletters and manage subscribers
+function NewsletterSection() {
+	const [subscribers, setSubscribers] = useState([]);
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState("");
+
+	// Newsletter form state
+	const [subject, setSubject] = useState("");
+	const [message, setMessage] = useState("");
+	const [recipients, setRecipients] = useState("active");
+	const [sending, setSending] = useState(false);
+
+	// Add subscriber modal state
+	const [showAddModal, setShowAddModal] = useState(false);
+	const [newEmail, setNewEmail] = useState("");
+	const [newName, setNewName] = useState("");
+
+	// Preview modal state
+	const [showPreview, setShowPreview] = useState(false);
+
+	useEffect(() => {
+		refreshSubscribers();
+	}, []);
+
+	const refreshSubscribers = async () => {
+		setLoading(true);
+		setError("");
+		try {
+			const response = await fetch("/api/newsletter/subscribers", {
+				credentials: "include",
+			});
+
+			if (!response.ok) {
+				throw new Error("Failed to fetch subscribers");
+			}
+
+			const data = await response.json();
+			setSubscribers(data);
+		} catch (err) {
+			setError(err.message || "Failed to load subscribers");
+			toast.error(err.message || "Failed to load subscribers");
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleSendNewsletter = async (event) => {
+		event.preventDefault();
+
+		if (!subject || !message) {
+			toast.error("Subject and message are required");
+			return;
+		}
+
+		if (!window.confirm(`Send newsletter to ${recipients === "all" ? "all" : "active"} subscribers?`)) {
+			return;
+		}
+
+		setSending(true);
+		setError("");
+
+		try {
+			const response = await fetch("/api/newsletter/send", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				credentials: "include",
+				body: JSON.stringify({ subject, message, recipients }),
+			});
+
+			if (!response.ok) {
+				const data = await response.json().catch(() => null);
+				throw new Error(data?.message || "Failed to send newsletter");
+			}
+
+			const data = await response.json();
+			toast.success(`Newsletter sent to ${data.recipientCount} subscribers!`);
+
+			// Clear form
+			setSubject("");
+			setMessage("");
+			setRecipients("active");
+		} catch (err) {
+			setError(err.message || "Failed to send newsletter");
+			toast.error(err.message || "Failed to send newsletter");
+		} finally {
+			setSending(false);
+		}
+	};
+
+	const handleAddSubscriber = async (event) => {
+		event.preventDefault();
+
+		if (!newEmail) {
+			toast.error("Email is required");
+			return;
+		}
+
+		setLoading(true);
+		setError("");
+
+		try {
+			const response = await fetch("/api/newsletter/subscribers", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				credentials: "include",
+				body: JSON.stringify({ email: newEmail, name: newName }),
+			});
+
+			if (!response.ok) {
+				const data = await response.json().catch(() => null);
+				throw new Error(data?.message || "Failed to add subscriber");
+			}
+
+			toast.success("Subscriber added successfully!");
+			setNewEmail("");
+			setNewName("");
+			setShowAddModal(false);
+			await refreshSubscribers();
+		} catch (err) {
+			setError(err.message || "Failed to add subscriber");
+			toast.error(err.message || "Failed to add subscriber");
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleDeleteSubscriber = async (id) => {
+		if (!window.confirm("Delete this subscriber?")) return;
+
+		try {
+			const response = await fetch(`/api/newsletter/subscribers/${id}`, {
+				method: "DELETE",
+				credentials: "include",
+			});
+
+			if (!response.ok && response.status !== 204) {
+				throw new Error("Failed to delete subscriber");
+			}
+
+			toast.success("Subscriber deleted successfully!");
+			await refreshSubscribers();
+		} catch (err) {
+			setError(err.message || "Failed to delete subscriber");
+			toast.error(err.message || "Failed to delete subscriber");
+		}
+	};
+
+	const handleExportSubscribers = () => {
+		window.open("/api/newsletter/subscribers/export", "_blank");
+	};
+
+	return (
+		<div>
+			<h3>Send Newsletter</h3>
+			{error && <p className="error-message">{error}</p>}
+
+			<form onSubmit={handleSendNewsletter} className="admin-form" style={{ marginBottom: "var(--spacing-2xl)" }}>
+				<label className="form-field">
+					<span>Subject *</span>
+					<input
+						type="text"
+						placeholder="Newsletter subject..."
+						value={subject}
+						onChange={(e) => setSubject(e.target.value)}
+						required
+					/>
+				</label>
+
+				<label className="form-field">
+					<span>Message *</span>
+					<textarea
+						rows={10}
+						placeholder="Compose your newsletter message..."
+						style={{ minHeight: "300px" }}
+						value={message}
+						onChange={(e) => setMessage(e.target.value)}
+						required
+					/>
+				</label>
+
+				<label className="form-field">
+					<span>Recipients</span>
+					<select value={recipients} onChange={(e) => setRecipients(e.target.value)}>
+						<option value="active">Active Subscribers Only</option>
+						<option value="all">All Subscribers</option>
+					</select>
+				</label>
+
+				<div style={{ display: "flex", gap: "var(--spacing-md)" }}>
+					<button
+						type="button"
+						className="btn btn-secondary"
+						onClick={() => setShowPreview(true)}
+						disabled={!subject || !message}
+					>
+						Preview
+					</button>
+					<button type="submit" className="btn btn-primary" disabled={sending}>
+						{sending ? "Sending..." : "Send Newsletter"}
+					</button>
+				</div>
+			</form>
+
+			{/* Preview Modal */}
+			{showPreview && (
+				<div style={{
+					position: "fixed",
+					top: 0,
+					left: 0,
+					right: 0,
+					bottom: 0,
+					background: "rgba(0, 0, 0, 0.5)",
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "center",
+					zIndex: 1000,
+					padding: "var(--spacing-lg)"
+				}}>
+					<div style={{
+						background: "white",
+						borderRadius: "var(--radius-md)",
+						padding: "var(--spacing-xl)",
+						maxWidth: "600px",
+						width: "100%",
+						maxHeight: "80vh",
+						overflow: "auto"
+					}}>
+						<h3>Newsletter Preview</h3>
+						<div style={{
+							marginTop: "var(--spacing-lg)",
+							padding: "var(--spacing-lg)",
+							border: "1px solid var(--color-border)",
+							borderRadius: "var(--radius-md)"
+						}}>
+							<h4 style={{ color: "var(--primary-purple)", marginBottom: "var(--spacing-md)" }}>
+								{subject}
+							</h4>
+							<div style={{ whiteSpace: "pre-wrap" }}>
+								{message}
+							</div>
+						</div>
+						<div style={{ marginTop: "var(--spacing-lg)", display: "flex", gap: "var(--spacing-md)" }}>
+							<button
+								type="button"
+								className="btn btn-secondary"
+								onClick={() => setShowPreview(false)}
+							>
+								Close
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+
+			<h3 style={{ marginTop: "var(--spacing-2xl)" }}>Subscriber List</h3>
+			<div style={{ marginBottom: "var(--spacing-md)" }}>
+				<button
+					type="button"
+					className="btn btn-primary"
+					style={{ marginRight: "var(--spacing-sm)" }}
+					onClick={() => setShowAddModal(true)}
+				>
+					Add Subscriber
+				</button>
+				<button
+					type="button"
+					className="btn btn-secondary"
+					onClick={handleExportSubscribers}
+					disabled={subscribers.length === 0}
+				>
+					Export List
+				</button>
+			</div>
+
+			{/* Add Subscriber Modal */}
+			{showAddModal && (
+				<div style={{
+					position: "fixed",
+					top: 0,
+					left: 0,
+					right: 0,
+					bottom: 0,
+					background: "rgba(0, 0, 0, 0.5)",
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "center",
+					zIndex: 1000,
+					padding: "var(--spacing-lg)"
+				}}>
+					<div style={{
+						background: "white",
+						borderRadius: "var(--radius-md)",
+						padding: "var(--spacing-xl)",
+						maxWidth: "500px",
+						width: "100%"
+					}}>
+						<h3>Add Subscriber</h3>
+						<form onSubmit={handleAddSubscriber} className="admin-form" style={{ marginTop: "var(--spacing-lg)" }}>
+							<label className="form-field">
+								<span>Email *</span>
+								<input
+									type="email"
+									placeholder="subscriber@example.com"
+									value={newEmail}
+									onChange={(e) => setNewEmail(e.target.value)}
+									required
+								/>
+							</label>
+							<label className="form-field">
+								<span>Name (optional)</span>
+								<input
+									type="text"
+									placeholder="Subscriber name"
+									value={newName}
+									onChange={(e) => setNewName(e.target.value)}
+								/>
+							</label>
+							<div style={{ display: "flex", gap: "var(--spacing-md)", marginTop: "var(--spacing-lg)" }}>
+								<button
+									type="button"
+									className="btn btn-secondary"
+									onClick={() => {
+										setShowAddModal(false);
+										setNewEmail("");
+										setNewName("");
+									}}
+								>
+									Cancel
+								</button>
+								<button type="submit" className="btn btn-primary" disabled={loading}>
+									{loading ? "Adding..." : "Add Subscriber"}
+								</button>
+							</div>
+						</form>
+					</div>
+				</div>
+			)}
+
+			{loading && <p>Loading subscribers...</p>}
+
+			<table className="admin-table">
+				<thead>
+					<tr>
+						<th>Email</th>
+						<th>Name</th>
+						<th>Subscribed</th>
+						<th>Status</th>
+						<th>Actions</th>
+					</tr>
+				</thead>
+				<tbody>
+					{subscribers.length === 0 ? (
+						<tr>
+							<td colSpan="5" style={{ textAlign: "center", color: "var(--color-text-light)" }}>
+								No subscribers yet. Click "Add Subscriber" to get started!
+							</td>
+						</tr>
+					) : (
+						subscribers.map((subscriber) => (
+							<tr key={subscriber.id}>
+								<td>{subscriber.email}</td>
+								<td>{subscriber.name || "-"}</td>
+								<td>{new Date(subscriber.subscribed_at).toLocaleDateString()}</td>
+								<td>
+									<span style={{
+										padding: "4px 12px",
+										borderRadius: "12px",
+										fontSize: "0.875rem",
+										fontWeight: "500",
+										background: subscriber.status === "active" ? "rgba(34, 197, 94, 0.1)" : "rgba(239, 68, 68, 0.1)",
+										color: subscriber.status === "active" ? "#16a34a" : "#dc2626"
+									}}>
+										{subscriber.status}
+									</span>
+								</td>
+								<td>
+									<button
+										type="button"
+										onClick={() => handleDeleteSubscriber(subscriber.id)}
+										className="btn btn-danger"
+										style={{ fontSize: "0.875rem", padding: "0.5rem 1rem" }}
+									>
+										Delete
+									</button>
+								</td>
+							</tr>
+						))
+					)}
+				</tbody>
+			</table>
+		</div>
+	);
+}
+
 // Settings Section - Social Media Integration and other settings
 function SettingsSection() {
+	const [activeSettingsTab, setActiveSettingsTab] = useState("social");
+
+	const settingsTabs = [
+		{ id: "social", label: "Social Media" },
+		{ id: "newsletter", label: "Newsletter" }
+	];
+
 	return (
 		<div>
 			<h2>Settings</h2>
-			<p style={{ marginBottom: "var(--spacing-xl)", color: "var(--color-text-light)" }}>
-				Connect your social media accounts to automatically pull posts into the News section.
-			</p>
+
+			{/* Settings Tabs */}
+			<nav style={{
+				display: "flex",
+				gap: "var(--spacing-sm)",
+				marginBottom: "var(--spacing-xl)",
+				borderBottom: "2px solid var(--color-border)"
+			}}>
+				{settingsTabs.map((tab) => (
+					<button
+						key={tab.id}
+						type="button"
+						onClick={() => setActiveSettingsTab(tab.id)}
+						style={{
+							background: "none",
+							border: "none",
+							padding: "var(--spacing-md) var(--spacing-lg)",
+							fontSize: "1rem",
+							fontWeight: "500",
+							color: activeSettingsTab === tab.id ? "var(--primary-purple)" : "var(--color-text-light)",
+							cursor: "pointer",
+							borderBottom: activeSettingsTab === tab.id ? "3px solid var(--primary-purple)" : "3px solid transparent",
+							transition: "all 0.2s ease",
+							marginBottom: "-2px"
+						}}
+					>
+						{tab.label}
+					</button>
+				))}
+			</nav>
+
+			{/* Social Media Tab */}
+			{activeSettingsTab === "social" && (
+				<div>
+					<p style={{ marginBottom: "var(--spacing-xl)", color: "var(--color-text-light)" }}>
+						Connect your social media accounts to automatically pull posts into the News section.
+					</p>
 
 			{/* Facebook Integration */}
 			<h3
@@ -2678,6 +3117,11 @@ function SettingsSection() {
 					Connect Twitter/X (Coming Soon)
 				</button>
 			</div>
+		</div>
+	)}
+
+	{/* Newsletter Tab */}
+	{activeSettingsTab === "newsletter" && <NewsletterSection />}
 		</div>
 	);
 }

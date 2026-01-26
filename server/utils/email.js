@@ -27,6 +27,50 @@ console.log("Frontend URL:", FRONTEND_URL);
 console.log("==============================\n");
 
 /**
+ * Generic send email function
+ * @param {Object} options - Email options
+ * @param {string} options.to - Recipient email address
+ * @param {string} options.subject - Email subject
+ * @param {string} options.html - HTML content
+ * @param {string} options.text - Plain text content
+ */
+export async function sendEmail({ to, subject, html, text }) {
+  console.log("\n=== Sending Email ===");
+  console.log("To:", to);
+  console.log("Subject:", subject);
+
+  const msg = {
+    to,
+    from: {
+      email: FROM_EMAIL,
+      name: FROM_NAME,
+    },
+    replyTo: REPLY_TO,
+    subject,
+    text,
+    html,
+  };
+
+  try {
+    console.log("📧 Attempting to send email via SendGrid...");
+    const response = await sgMail.send(msg);
+    console.log("✅ Email sent successfully!");
+    console.log("====================================\n");
+    return response;
+  } catch (error) {
+    console.error("❌ Error sending email:", error);
+    console.error("Error message:", error.message);
+    console.error("Error code:", error.code);
+    if (error.response) {
+      console.error("SendGrid error response body:", JSON.stringify(error.response.body, null, 2));
+      console.error("SendGrid error response headers:", error.response.headers);
+    }
+    console.log("====================================\n");
+    throw new Error("Failed to send email");
+  }
+}
+
+/**
  * Send a welcome email to new users with password setup link
  * @param {string} to - Recipient email address
  * @param {string} resetToken - Password reset token

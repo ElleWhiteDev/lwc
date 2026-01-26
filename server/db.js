@@ -135,6 +135,23 @@ async function initDb() {
     CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email);
   `);
 
+  // Newsletter subscribers table
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS newsletter_subscribers (
+      id SERIAL PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      name TEXT,
+      status TEXT NOT NULL DEFAULT 'active',
+      subscribed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      unsubscribed_at TIMESTAMPTZ,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
+  await pool.query(`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_newsletter_subscribers_email ON newsletter_subscribers(email);
+  `);
+
   await seedAdminUser();
 }
 

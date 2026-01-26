@@ -12,6 +12,7 @@ import eventsRoutes from "./routes/events.js";
 import adminRoutes from "./routes/admin.js";
 import imagesRoutes from "./routes/images.js";
 import boardMembersRoutes from "./routes/boardMembers.js";
+import newsletterRoutes from "./routes/newsletter.js";
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.use("/api", eventsRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api", imagesRoutes);
 app.use("/api", boardMembersRoutes);
+app.use("/api/newsletter", newsletterRoutes);
 
 const distPath = path.resolve(__dirname, "..", "dist");
 
