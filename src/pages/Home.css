@@ -443,3 +443,23 @@
     opacity: 0;
   }
 }
+
+/* Newsletter Section */
+.newsletter-section {
+  padding: var(--spacing-3xl) var(--spacing-lg);
+}
+
+.newsletter-form input:focus {
+  border-color: var(--primary-purple) !important;
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+@media (max-width: 768px) {
+  .newsletter-section {
+    padding: var(--spacing-2xl) var(--spacing-md);
+  }
+
+  .newsletter-content h2 {
+    font-size: 1.75rem;
+  }
+}

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { useSiteConfig } from "../config/siteConfig.jsx";
+import toast from "react-hot-toast";
 import "./Home.css";
 import LWCHomeBackground from "../assets/images/LWCHomeBackground.svg";
 
@@ -8,6 +9,11 @@ const Home = () => {
   const siteConfig = useSiteConfig();
   const [homeContent, setHomeContent] = useState(null);
   const [stars, setStars] = useState([]);
+
+  // Newsletter subscription state
+  const [newsletterEmail, setNewsletterEmail] = useState("");
+  const [newsletterName, setNewsletterName] = useState("");
+  const [subscribing, setSubscribing] = useState(false);
   const heroImageRef = useRef(null);
   const [selectedNews, setSelectedNews] = useState(null);
   const [isNewsModalOpen, setIsNewsModalOpen] = useState(false);
@@ -81,6 +87,44 @@ const Home = () => {
 	      clientY: touch.clientY,
 	    });
 	  };
+
+  const handleNewsletterSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!newsletterEmail) {
+      toast.error("Please enter your email address");
+      return;
+    }
+
+    setSubscribing(true);
+
+    try {
+      const response = await fetch("/api/newsletter/subscribe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: newsletterEmail,
+          name: newsletterName,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to subscribe");
+      }
+
+      toast.success(data.message || "Successfully subscribed to newsletter!");
+      setNewsletterEmail("");
+      setNewsletterName("");
+    } catch (err) {
+      toast.error(err.message || "Failed to subscribe to newsletter");
+    } finally {
+      setSubscribing(false);
+    }
+  };
 
   // Content with fallbacks
   const heroSubtitle =
@@ -328,6 +372,61 @@ const Home = () => {
                 </div>
               </article>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Newsletter Subscription */}
+      <section className="newsletter-section section" style={{ background: "linear-gradient(135deg, #f5f3ff 0%, #faf5ff 100%)" }}>
+        <div className="container">
+          <div className="newsletter-content" style={{ maxWidth: "600px", margin: "0 auto", textAlign: "center" }}>
+            <h2 style={{ marginBottom: "var(--spacing-md)" }}>Stay Connected</h2>
+            <p style={{ marginBottom: "var(--spacing-xl)", color: "var(--color-text-light)" }}>
+              Subscribe to our newsletter to receive updates about upcoming events, community news, and ways to get involved.
+            </p>
+            <form onSubmit={handleNewsletterSubmit} className="newsletter-form" style={{ display: "flex", flexDirection: "column", gap: "var(--spacing-md)" }}>
+              <input
+                type="text"
+                placeholder="Your name (optional)"
+                value={newsletterName}
+                onChange={(e) => setNewsletterName(e.target.value)}
+                style={{
+                  padding: "var(--spacing-md)",
+                  borderRadius: "var(--radius-md)",
+                  border: "2px solid #e5e7eb",
+                  fontSize: "1rem",
+                  outline: "none",
+                  transition: "border-color 0.2s"
+                }}
+                onFocus={(e) => e.target.style.borderColor = "var(--primary-purple)"}
+                onBlur={(e) => e.target.style.borderColor = "#e5e7eb"}
+              />
+              <input
+                type="email"
+                placeholder="Your email address *"
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
+                required
+                style={{
+                  padding: "var(--spacing-md)",
+                  borderRadius: "var(--radius-md)",
+                  border: "2px solid #e5e7eb",
+                  fontSize: "1rem",
+                  outline: "none",
+                  transition: "border-color 0.2s"
+                }}
+                onFocus={(e) => e.target.style.borderColor = "var(--primary-purple)"}
+                onBlur={(e) => e.target.style.borderColor = "#e5e7eb"}
+              />
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={subscribing}
+                style={{ width: "100%" }}
+              >
+                {subscribing ? "Subscribing..." : "Subscribe to Newsletter"}
+              </button>
+            </form>
           </div>
         </div>
       </section>

@@ -2469,22 +2469,29 @@ function NewsletterSection() {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
 
-	// Newsletter form state
-	const [subject, setSubject] = useState("");
-	const [message, setMessage] = useState("");
+	// Newsletter sending state
 	const [recipients, setRecipients] = useState("active");
 	const [sending, setSending] = useState(false);
+
+	// SendGrid campaign state
+	const [campaigns, setCampaigns] = useState([]);
+	const [selectedCampaign, setSelectedCampaign] = useState("");
+	const [loadingCampaigns, setLoadingCampaigns] = useState(false);
+	const [syncing, setSyncing] = useState(false);
+
+	// File upload state
+	const [uploadedFile, setUploadedFile] = useState(null);
+	const [uploadedHtml, setUploadedHtml] = useState("");
+	const [emailSubject, setEmailSubject] = useState("");
 
 	// Add subscriber modal state
 	const [showAddModal, setShowAddModal] = useState(false);
 	const [newEmail, setNewEmail] = useState("");
 	const [newName, setNewName] = useState("");
 
-	// Preview modal state
-	const [showPreview, setShowPreview] = useState(false);
-
 	useEffect(() => {
 		refreshSubscribers();
+		loadDraftCampaigns();
 	}, []);
 
 	const refreshSubscribers = async () => {
@@ -2496,12 +2503,15 @@ function NewsletterSection() {
 			});
 
 			if (!response.ok) {
+				const text = await response.text();
+				console.error("Failed to fetch subscribers. Response:", text);
 				throw new Error("Failed to fetch subscribers");
 			}
 
 			const data = await response.json();
 			setSubscribers(data);
 		} catch (err) {
+			console.error("Error in refreshSubscribers:", err);
 			setError(err.message || "Failed to load subscribers");
 			toast.error(err.message || "Failed to load subscribers");
 		} finally {
@@ -2509,46 +2519,153 @@ function NewsletterSection() {
 		}
 	};
 
-	const handleSendNewsletter = async (event) => {
-		event.preventDefault();
+	const loadDraftCampaigns = async () => {
+		setLoadingCampaigns(true);
+		try {
+			const response = await fetch("/api/newsletter/campaigns/drafts", {
+				credentials: "include",
+			});
 
-		if (!subject || !message) {
-			toast.error("Subject and message are required");
+			if (!response.ok) {
+				throw new Error("Failed to fetch draft campaigns");
+			}
+
+			const data = await response.json();
+			setCampaigns(data);
+		} catch (err) {
+			console.error("Error loading campaigns:", err);
+			toast.error("Failed to load SendGrid campaigns");
+		} finally {
+			setLoadingCampaigns(false);
+		}
+	};
+
+	const handleSyncAllSubscribers = async () => {
+		if (!window.confirm("Sync all subscribers to SendGrid? This may take a moment.")) {
 			return;
 		}
 
-		if (!window.confirm(`Send newsletter to ${recipients === "all" ? "all" : "active"} subscribers?`)) {
+		setSyncing(true);
+		try {
+			const response = await fetch("/api/newsletter/subscribers/sync-all", {
+				method: "POST",
+				credentials: "include",
+			});
+
+			if (!response.ok) {
+				throw new Error("Failed to sync subscribers");
+			}
+
+			const data = await response.json();
+			toast.success(data.message);
+		} catch (err) {
+			toast.error(err.message || "Failed to sync subscribers");
+		} finally {
+			setSyncing(false);
+		}
+	};
+
+	const handleSendCampaign = async () => {
+		if (!selectedCampaign) {
+			toast.error("Please select a campaign");
+			return;
+		}
+
+		if (!window.confirm(`Send campaign to ${recipients === "all" ? "all" : "active"} subscribers?`)) {
 			return;
 		}
 
 		setSending(true);
-		setError("");
-
 		try {
-			const response = await fetch("/api/newsletter/send", {
+			const response = await fetch(`/api/newsletter/campaigns/${selectedCampaign}/send`, {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
 				},
 				credentials: "include",
-				body: JSON.stringify({ subject, message, recipients }),
+				body: JSON.stringify({ recipients }),
 			});
 
 			if (!response.ok) {
 				const data = await response.json().catch(() => null);
-				throw new Error(data?.message || "Failed to send newsletter");
+				throw new Error(data?.message || "Failed to send campaign");
 			}
 
 			const data = await response.json();
-			toast.success(`Newsletter sent to ${data.recipientCount} subscribers!`);
+			toast.success(data.message);
+		} catch (err) {
+			toast.error(err.message || "Failed to send campaign");
+		} finally {
+			setSending(false);
+		}
+	};
+
+	const handleFileUpload = (event) => {
+		const file = event.target.files[0];
+		if (!file) return;
+
+		if (!file.name.endsWith('.html') && !file.name.endsWith('.htm')) {
+			toast.error("Please upload an HTML file");
+			return;
+		}
+
+		const reader = new FileReader();
+		reader.onload = (e) => {
+			setUploadedHtml(e.target.result);
+			setUploadedFile(file);
+			toast.success(`File "${file.name}" loaded successfully`);
+		};
+		reader.onerror = () => {
+			toast.error("Failed to read file");
+		};
+		reader.readAsText(file);
+	};
+
+	const handleSendUploadedEmail = async () => {
+		if (!uploadedHtml) {
+			toast.error("Please upload an HTML file first");
+			return;
+		}
+
+		if (!emailSubject) {
+			toast.error("Please enter an email subject");
+			return;
+		}
+
+		if (!window.confirm(`Send email to ${recipients === "all" ? "all" : "active"} subscribers?`)) {
+			return;
+		}
+
+		setSending(true);
+		try {
+			const response = await fetch("/api/newsletter/send-html", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				credentials: "include",
+				body: JSON.stringify({
+					subject: emailSubject,
+					html: uploadedHtml,
+					recipients,
+				}),
+			});
+
+			if (!response.ok) {
+				const data = await response.json().catch(() => null);
+				throw new Error(data?.message || "Failed to send email");
+			}
+
+			const data = await response.json();
+			toast.success(`Email sent to ${data.recipientCount} subscribers!`);
 
 			// Clear form
-			setSubject("");
-			setMessage("");
+			setUploadedFile(null);
+			setUploadedHtml("");
+			setEmailSubject("");
 			setRecipients("active");
 		} catch (err) {
-			setError(err.message || "Failed to send newsletter");
-			toast.error(err.message || "Failed to send newsletter");
+			toast.error(err.message || "Failed to send email");
 		} finally {
 			setSending(false);
 		}
@@ -2566,6 +2683,8 @@ function NewsletterSection() {
 		setError("");
 
 		try {
+			console.log("Adding subscriber:", { email: newEmail, name: newName });
+
 			const response = await fetch("/api/newsletter/subscribers", {
 				method: "POST",
 				headers: {
@@ -2575,10 +2694,26 @@ function NewsletterSection() {
 				body: JSON.stringify({ email: newEmail, name: newName }),
 			});
 
+			console.log("Response status:", response.status);
+			console.log("Response ok:", response.ok);
+
 			if (!response.ok) {
-				const data = await response.json().catch(() => null);
-				throw new Error(data?.message || "Failed to add subscriber");
+				const contentType = response.headers.get("content-type");
+				console.log("Response content-type:", contentType);
+
+				if (contentType && contentType.includes("application/json")) {
+					const data = await response.json();
+					console.log("Error data:", data);
+					throw new Error(data?.message || "Failed to add subscriber");
+				} else {
+					const text = await response.text();
+					console.log("Error response (non-JSON):", text);
+					throw new Error("Server returned an error. Check console for details.");
+				}
 			}
+
+			const data = await response.json();
+			console.log("Success data:", data);
 
 			toast.success("Subscriber added successfully!");
 			setNewEmail("");
@@ -2586,6 +2721,7 @@ function NewsletterSection() {
 			setShowAddModal(false);
 			await refreshSubscribers();
 		} catch (err) {
+			console.error("Error adding subscriber:", err);
 			setError(err.message || "Failed to add subscriber");
 			toast.error(err.message || "Failed to add subscriber");
 		} finally {
@@ -2618,108 +2754,249 @@ function NewsletterSection() {
 		window.open("/api/newsletter/subscribers/export", "_blank");
 	};
 
+	const activeSubscribers = subscribers.filter(s => s.status === "active").length;
+	const totalSubscribers = subscribers.length;
+
 	return (
 		<div>
 			<h3>Send Newsletter</h3>
+			<div style={{
+				marginBottom: "var(--spacing-lg)",
+				padding: "var(--spacing-md)",
+				background: "#f8f9fa",
+				borderRadius: "var(--radius-md)",
+				display: "flex",
+				gap: "var(--spacing-xl)",
+				justifyContent: "center"
+			}}>
+				<div style={{ textAlign: "center" }}>
+					<div style={{ fontSize: "2rem", fontWeight: "700", color: "var(--primary-purple)" }}>
+						{activeSubscribers}
+					</div>
+					<div style={{ fontSize: "0.875rem", color: "var(--color-text-light)" }}>
+						Active Subscribers
+					</div>
+				</div>
+				<div style={{ textAlign: "center" }}>
+					<div style={{ fontSize: "2rem", fontWeight: "700", color: "var(--color-text)" }}>
+						{totalSubscribers}
+					</div>
+					<div style={{ fontSize: "0.875rem", color: "var(--color-text-light)" }}>
+						Total Subscribers
+					</div>
+				</div>
+			</div>
 			{error && <p className="error-message">{error}</p>}
 
-			<form onSubmit={handleSendNewsletter} className="admin-form" style={{ marginBottom: "var(--spacing-2xl)" }}>
-				<label className="form-field">
-					<span>Subject *</span>
-					<input
-						type="text"
-						placeholder="Newsletter subject..."
-						value={subject}
-						onChange={(e) => setSubject(e.target.value)}
-						required
-					/>
-				</label>
+			{/* SendGrid Campaign Picker */}
+			<div style={{
+				marginBottom: "var(--spacing-2xl)",
+				padding: "var(--spacing-xl)",
+				background: "linear-gradient(135deg, #f5f3ff 0%, #faf5ff 100%)",
+				borderRadius: "var(--radius-lg)",
+				border: "2px solid var(--primary-purple)"
+			}}>
+				<h4 style={{ marginBottom: "var(--spacing-md)", color: "var(--primary-purple)" }}>
+					📧 Send SendGrid Campaign
+				</h4>
+				<p style={{ marginBottom: "var(--spacing-lg)", color: "var(--color-text-light)", fontSize: "0.9rem" }}>
+					Create and design your newsletter in SendGrid, then select it here to send to your subscribers.
+				</p>
 
-				<label className="form-field">
-					<span>Message *</span>
-					<textarea
-						rows={10}
-						placeholder="Compose your newsletter message..."
-						style={{ minHeight: "300px" }}
-						value={message}
-						onChange={(e) => setMessage(e.target.value)}
-						required
-					/>
-				</label>
-
-				<label className="form-field">
-					<span>Recipients</span>
-					<select value={recipients} onChange={(e) => setRecipients(e.target.value)}>
-						<option value="active">Active Subscribers Only</option>
-						<option value="all">All Subscribers</option>
-					</select>
-				</label>
-
-				<div style={{ display: "flex", gap: "var(--spacing-md)" }}>
+				<div style={{ display: "flex", gap: "var(--spacing-md)", marginBottom: "var(--spacing-md)", flexWrap: "wrap" }}>
 					<button
 						type="button"
 						className="btn btn-secondary"
-						onClick={() => setShowPreview(true)}
-						disabled={!subject || !message}
+						onClick={loadDraftCampaigns}
+						disabled={loadingCampaigns}
 					>
-						Preview
+						{loadingCampaigns ? "Loading..." : "🔄 Refresh Campaigns"}
 					</button>
-					<button type="submit" className="btn btn-primary" disabled={sending}>
-						{sending ? "Sending..." : "Send Newsletter"}
+					<button
+						type="button"
+						className="btn btn-secondary"
+						onClick={handleSyncAllSubscribers}
+						disabled={syncing}
+					>
+						{syncing ? "Syncing..." : "⬆️ Sync Subscribers to SendGrid"}
+					</button>
+					<a
+						href="https://mc.sendgrid.com/single-sends"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="btn btn-secondary"
+						style={{ textDecoration: "none" }}
+					>
+						🎨 Create Campaign in SendGrid
+					</a>
+				</div>
+
+				<div style={{ display: "flex", gap: "var(--spacing-md)", alignItems: "flex-end", flexWrap: "wrap" }}>
+					<label className="form-field" style={{ flex: 1, minWidth: "250px" }}>
+						<span>Select Campaign</span>
+						<select
+							value={selectedCampaign}
+							onChange={(e) => setSelectedCampaign(e.target.value)}
+							disabled={loadingCampaigns || campaigns.length === 0}
+							style={{
+								padding: "var(--spacing-md)",
+								fontSize: "1rem",
+								borderRadius: "var(--radius-md)",
+								border: "2px solid #e0e0e0",
+								background: "white",
+								cursor: "pointer",
+								transition: "all 0.2s ease",
+								outline: "none"
+							}}
+							onFocus={(e) => e.target.style.borderColor = "var(--primary-purple)"}
+							onBlur={(e) => e.target.style.borderColor = "#e0e0e0"}
+						>
+							<option value="">-- Select a draft campaign --</option>
+							{campaigns.map((campaign) => (
+								<option key={campaign.id} value={campaign.id}>
+									{campaign.name}
+								</option>
+							))}
+						</select>
+					</label>
+
+					<label className="form-field" style={{ flex: 1, minWidth: "200px" }}>
+						<span>Recipients</span>
+						<select
+							value={recipients}
+							onChange={(e) => setRecipients(e.target.value)}
+							style={{
+								padding: "var(--spacing-md)",
+								fontSize: "1rem",
+								borderRadius: "var(--radius-md)",
+								border: "2px solid #e0e0e0",
+								background: "white",
+								cursor: "pointer",
+								transition: "all 0.2s ease",
+								outline: "none"
+							}}
+							onFocus={(e) => e.target.style.borderColor = "var(--primary-purple)"}
+							onBlur={(e) => e.target.style.borderColor = "#e0e0e0"}
+						>
+							<option value="active">✓ Active Subscribers Only</option>
+							<option value="all">📧 All Subscribers</option>
+						</select>
+					</label>
+
+					<button
+						type="button"
+						className="btn btn-primary"
+						onClick={handleSendCampaign}
+						disabled={!selectedCampaign || sending}
+						style={{ minWidth: "150px" }}
+					>
+						{sending ? "Preparing..." : "📤 Prepare Campaign"}
 					</button>
 				</div>
-			</form>
 
-			{/* Preview Modal */}
-			{showPreview && (
-				<div style={{
-					position: "fixed",
-					top: 0,
-					left: 0,
-					right: 0,
-					bottom: 0,
-					background: "rgba(0, 0, 0, 0.5)",
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "center",
-					zIndex: 1000,
-					padding: "var(--spacing-lg)"
-				}}>
-					<div style={{
-						background: "white",
-						borderRadius: "var(--radius-md)",
-						padding: "var(--spacing-xl)",
-						maxWidth: "600px",
-						width: "100%",
-						maxHeight: "80vh",
-						overflow: "auto"
-					}}>
-						<h3>Newsletter Preview</h3>
-						<div style={{
-							marginTop: "var(--spacing-lg)",
-							padding: "var(--spacing-lg)",
-							border: "1px solid var(--color-border)",
-							borderRadius: "var(--radius-md)"
-						}}>
-							<h4 style={{ color: "var(--primary-purple)", marginBottom: "var(--spacing-md)" }}>
-								{subject}
-							</h4>
-							<div style={{ whiteSpace: "pre-wrap" }}>
-								{message}
-							</div>
-						</div>
-						<div style={{ marginTop: "var(--spacing-lg)", display: "flex", gap: "var(--spacing-md)" }}>
+				{campaigns.length === 0 && !loadingCampaigns && (
+					<p style={{ marginTop: "var(--spacing-md)", color: "var(--color-text-light)", fontSize: "0.875rem", fontStyle: "italic" }}>
+						No draft campaigns found. Create one in SendGrid first.
+					</p>
+				)}
+			</div>
+
+			{/* Upload HTML File Section */}
+			<div style={{
+				marginBottom: "var(--spacing-2xl)",
+				padding: "var(--spacing-xl)",
+				background: "linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%)",
+				borderRadius: "var(--radius-lg)",
+				border: "2px solid #ff6b6b"
+			}}>
+				<h4 style={{ marginBottom: "var(--spacing-md)", color: "#d63031" }}>
+					📄 Upload & Send HTML Email
+				</h4>
+				<p style={{ marginBottom: "var(--spacing-lg)", color: "var(--color-text-light)", fontSize: "0.9rem" }}>
+					Upload a pre-designed HTML email file and send it directly to your subscribers.
+				</p>
+
+				<div className="admin-form">
+					<label className="form-field">
+						<span>Email Subject *</span>
+						<input
+							type="text"
+							placeholder="Enter email subject..."
+							value={emailSubject}
+							onChange={(e) => setEmailSubject(e.target.value)}
+						/>
+					</label>
+
+					<label className="form-field">
+						<span>Upload HTML File *</span>
+						<input
+							type="file"
+							accept=".html,.htm"
+							onChange={handleFileUpload}
+							style={{
+								padding: "var(--spacing-sm)",
+								border: "2px dashed #ddd",
+								borderRadius: "var(--radius-md)",
+								cursor: "pointer"
+							}}
+						/>
+						{uploadedFile && (
+							<p style={{ marginTop: "var(--spacing-sm)", color: "var(--primary-green)", fontSize: "0.875rem" }}>
+								✓ {uploadedFile.name} loaded ({(uploadedHtml.length / 1024).toFixed(1)} KB)
+							</p>
+						)}
+					</label>
+
+					<label className="form-field">
+						<span>Recipients</span>
+						<select
+							value={recipients}
+							onChange={(e) => setRecipients(e.target.value)}
+							style={{
+								padding: "var(--spacing-md)",
+								fontSize: "1rem",
+								borderRadius: "var(--radius-md)",
+								border: "2px solid #e0e0e0",
+								background: "white",
+								cursor: "pointer",
+								transition: "all 0.2s ease",
+								outline: "none"
+							}}
+							onFocus={(e) => e.target.style.borderColor = "#ff6b6b"}
+							onBlur={(e) => e.target.style.borderColor = "#e0e0e0"}
+						>
+							<option value="active">✓ Active Subscribers Only</option>
+							<option value="all">📧 All Subscribers</option>
+						</select>
+					</label>
+
+					<div style={{ display: "flex", gap: "var(--spacing-md)" }}>
+						<button
+							type="button"
+							className="btn btn-primary"
+							onClick={handleSendUploadedEmail}
+							disabled={!uploadedHtml || !emailSubject || sending}
+						>
+							{sending ? "Sending..." : "📧 Send Email"}
+						</button>
+						{uploadedHtml && (
 							<button
 								type="button"
 								className="btn btn-secondary"
-								onClick={() => setShowPreview(false)}
+								onClick={() => {
+									setUploadedFile(null);
+									setUploadedHtml("");
+									setEmailSubject("");
+								}}
 							>
-								Close
+								Clear
 							</button>
-						</div>
+						)}
 					</div>
 				</div>
-			)}
+			</div>
+
+
 
 			<h3 style={{ marginTop: "var(--spacing-2xl)" }}>Subscriber List</h3>
 			<div style={{ marginBottom: "var(--spacing-md)" }}>

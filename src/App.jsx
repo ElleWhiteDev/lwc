@@ -9,6 +9,7 @@ import Events from "./pages/Events";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
+import Unsubscribe from "./pages/Unsubscribe";
 import Admin from "./pages/Admin";
 import RequireAuth from "./components/RequireAuth";
 import "./App.css";
@@ -66,6 +67,7 @@ function App() {
                 <Route path="/login" element={<Login />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/unsubscribe" element={<Unsubscribe />} />
                 <Route
                   path="/admin"
                   element={
