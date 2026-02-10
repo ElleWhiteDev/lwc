@@ -272,16 +272,63 @@ input[type="number"] {
 }
 
 .btn-rainbow {
-  background: #D4A017;
+  position: relative;
+  background: linear-gradient(
+    135deg,
+    #e94057 0%,
+    #f27121 20%,
+    #f8d800 40%,
+    #4caf50 60%,
+    #2196f3 80%,
+    #9c27b0 100%
+  );
+  background-size: 200% 200%;
   color: var(--white);
-  box-shadow: 0 4px 15px rgba(212, 160, 23, 0.4);
+  box-shadow: 0 4px 15px rgba(233, 64, 87, 0.4);
+  overflow: hidden;
+  animation: rainbowShine 3s ease infinite;
+}
+
+.btn-rainbow::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.3) 50%,
+    transparent 70%
+  );
+  transform: rotate(45deg);
+  animation: shine 3s ease infinite;
 }
 
 .btn-rainbow:hover {
-  background: #B8860B;
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(212, 160, 23, 0.5);
+  box-shadow: 0 6px 20px rgba(233, 64, 87, 0.6);
   color: var(--white);
+  animation: rainbowShine 1.5s ease infinite;
+}
+
+@keyframes rainbowShine {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes shine {
+  0% {
+    left: -50%;
+  }
+  100% {
+    left: 150%;
+  }
 }
 
 /* CTA Secondary Button - for light backgrounds */
