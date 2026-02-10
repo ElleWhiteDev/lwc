@@ -1,5 +1,3 @@
-import fetch from "node-fetch";
-
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 const SENDGRID_API_BASE = "https://api.sendgrid.com/v3";
 
@@ -159,4 +157,3 @@ export async function getSuppressionGroups() {
     throw error;
   }
 }
-
