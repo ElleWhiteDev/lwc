@@ -1,0 +1,209 @@
+/* Coming Soon Hero Section */
+.coming-soon-hero {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.coming-soon-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--spacing-3xl);
+  align-items: center;
+  padding: var(--spacing-3xl) var(--spacing-lg);
+  padding-left: 8%;
+}
+
+.coming-soon-content {
+  z-index: 2;
+  padding-left: var(--spacing-xl);
+}
+
+.coming-soon-title {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.2;
+  margin-bottom: var(--spacing-xl);
+}
+
+.coming-soon-title .title-block {
+  font-family: var(--font-primary);
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-weight: 700;
+  color: var(--white);
+}
+
+.coming-soon-title .title-script {
+  font-family: var(--font-script);
+  font-size: clamp(3rem, 8vw, 5rem);
+}
+
+/* Progress Pride flag colors for "Celebrating" */
+.letter-C {
+  color: #ff0018;
+}
+.letter-e1 {
+  color: #ffa52c;
+}
+.letter-l {
+  color: #ffff41;
+}
+.letter-e2 {
+  color: #008018;
+}
+.letter-b {
+  color: #0000f9;
+}
+.letter-r {
+  color: #86007d;
+}
+.letter-a {
+  color: #ffffff;
+}
+.letter-t {
+  color: #ffafc8;
+}
+.letter-i {
+  color: #74d7ee;
+}
+.letter-n {
+  color: #613915;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+}
+.letter-g {
+  color: #000000;
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+}
+
+/* Mobile: Use solid white for "Celebrating" for better readability */
+@media (max-width: 768px) {
+  .title-script span[aria-hidden="true"] span {
+    color: var(--white) !important;
+    text-shadow: none !important;
+  }
+}
+
+.coming-soon-subtitle {
+  font-size: 1.25rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: var(--spacing-xl);
+  max-width: 500px;
+}
+
+.coming-soon-message {
+  margin-bottom: var(--spacing-xl);
+}
+
+.coming-soon-message h2 {
+  font-size: clamp(2rem, 4vw, 3rem);
+  color: var(--white);
+  margin-bottom: var(--spacing-sm);
+  font-family: var(--font-script);
+}
+
+.coming-soon-message p {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+}
+
+.coming-soon-buttons {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.coming-soon-image {
+  position: relative;
+  z-index: 2;
+  justify-self: end;
+  align-self: end;
+  padding-right: 5%;
+  padding-bottom: var(--spacing-xl);
+  width: 100%;
+  max-width: 480px;
+  aspect-ratio: 4 / 5;
+  background-image: url("../assets/images/Girl with Flag.svg");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: bottom right;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+}
+
+/* Remove mobile tap highlight and selection */
+.coming-soon-image,
+.coming-soon-image * {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* Star Burst Animation */
+.star-particle {
+  position: absolute;
+  pointer-events: none;
+  clip-path: polygon(
+    50% 0%,
+    61% 35%,
+    98% 35%,
+    68% 57%,
+    79% 91%,
+    50% 70%,
+    21% 91%,
+    32% 57%,
+    2% 35%,
+    39% 35%
+  );
+  animation: star-burst 1.5s ease-out forwards;
+  opacity: 1;
+  transform-origin: center;
+}
+
+@keyframes star-burst {
+  0% {
+    transform: translate(0, 0) rotate(var(--rotation)) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(calc(var(--vx) * 100px), calc(var(--vy) * 100px))
+      rotate(calc(var(--rotation) + 360deg)) scale(0);
+    opacity: 0;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 968px) {
+  .coming-soon-container {
+    grid-template-columns: 1fr;
+    padding-left: var(--spacing-lg);
+    text-align: center;
+  }
+
+  .coming-soon-content {
+    padding-left: 0;
+  }
+
+  .coming-soon-image {
+    justify-self: center;
+    padding-right: 0;
+  }
+
+  .coming-soon-buttons {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .coming-soon-message {
+    padding: var(--spacing-lg);
+  }
+
+  .coming-soon-subtitle {
+    font-size: 1rem;
+  }
+}
