@@ -2,6 +2,7 @@ import express from "express";
 import { pool } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
 import { logAudit } from "../audit.js";
+import logger from "../utils/logger.js";
 
 const router = express.Router();
 
@@ -18,7 +19,11 @@ router.get("/board-members", async (req, res) => {
 
     return res.json({ boardMembers: result.rows });
   } catch (error) {
-    console.error("Error fetching board members", error);
+    logger.error("Error fetching board members", {
+      error: error.message,
+      stack: error.stack,
+      endpoint: "GET /board-members",
+    });
     return res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -52,9 +57,22 @@ router.post("/board-members", requireAuth, async (req, res) => {
       newData: saved,
     });
 
+    logger.info("Board member created successfully", {
+      userId: req.user.id,
+      boardMemberId: saved.id,
+      name: saved.name,
+      title: saved.title,
+    });
+
     return res.status(201).json(saved);
   } catch (error) {
-    console.error("Error creating board member", error);
+    logger.error("Error creating board member", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user.id,
+      endpoint: "POST /board-members",
+      requestBody: { name, title, imageUrl, displayOrder },
+    });
     return res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -88,9 +106,21 @@ router.put("/board-members/reorder", requireAuth, async (req, res) => {
       newData: { updates },
     });
 
+    logger.info("Board members reordered successfully", {
+      userId: req.user.id,
+      updateCount: updates.length,
+      endpoint: "PUT /board-members/reorder",
+    });
+
     return res.json({ message: "Board members reordered successfully" });
   } catch (error) {
-    console.error("Error reordering board members", error);
+    logger.error("Error reordering board members", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user.id,
+      endpoint: "PUT /board-members/reorder",
+      updateCount: updates.length,
+    });
     return res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -144,9 +174,23 @@ router.put("/board-members/:id", requireAuth, async (req, res) => {
       newData: saved,
     });
 
+    logger.info("Board member updated successfully", {
+      userId: req.user.id,
+      boardMemberId: saved.id,
+      name: saved.name,
+      title: saved.title,
+    });
+
     return res.json(saved);
   } catch (error) {
-    console.error("Error updating board member", error);
+    logger.error("Error updating board member", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user.id,
+      boardMemberId: id,
+      endpoint: "PUT /board-members/:id",
+      requestBody: { name, title, imageUrl, displayOrder },
+    });
     return res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -178,9 +222,22 @@ router.delete("/board-members/:id", requireAuth, async (req, res) => {
       newData: null,
     });
 
+    logger.info("Board member deleted successfully", {
+      userId: req.user.id,
+      boardMemberId: existing.id,
+      name: existing.name,
+      title: existing.title,
+    });
+
     return res.status(204).end();
   } catch (error) {
-    console.error("Error deleting board member", error);
+    logger.error("Error deleting board member", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user.id,
+      boardMemberId: id,
+      endpoint: "DELETE /board-members/:id",
+    });
     return res.status(500).json({ message: "Internal server error" });
   }
 });

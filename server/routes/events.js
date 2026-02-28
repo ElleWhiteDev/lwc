@@ -3,6 +3,7 @@ import { pool } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
 import { logAudit } from "../audit.js";
 import { deleteFromS3 } from "../utils/s3.js";
+import logger from "../utils/logger.js";
 
 const router = express.Router();
 
@@ -43,7 +44,10 @@ router.get("/events", async (req, res) => {
 
     return res.json({ events });
   } catch (error) {
-    console.error("Error fetching events", error);
+    logger.error("Error fetching events", {
+      error: error.message,
+      stack: error.stack,
+    });
     return res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -84,7 +88,11 @@ router.get("/admin/events", requireAuth, async (req, res) => {
 
     return res.json({ events });
   } catch (error) {
-    console.error("Error fetching admin events", error);
+    logger.error("Error fetching admin events", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+    });
     return res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -157,9 +165,20 @@ router.post("/events", requireAuth, async (req, res) => {
       newData: saved,
     });
 
+    logger.info("Event created successfully", {
+      userId: req.user.id,
+      eventId: saved.id,
+      title: saved.title,
+    });
+
     return res.status(201).json(saved);
   } catch (error) {
-    console.error("Error creating event", error);
+    logger.error("Error creating event", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      title,
+    });
     return res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -193,9 +212,19 @@ router.put("/events/reorder", requireAuth, async (req, res) => {
       newData: { updates },
     });
 
+    logger.info("Events reordered successfully", {
+      userId: req.user.id,
+      updateCount: updates.length,
+    });
+
     return res.json({ message: "Events reordered successfully" });
   } catch (error) {
-    console.error("Error reordering events", error);
+    logger.error("Error reordering events", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      updateCount: updates?.length,
+    });
     return res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -284,9 +313,21 @@ router.put("/events/:id", requireAuth, async (req, res) => {
       newData: saved,
     });
 
+    logger.info("Event updated successfully", {
+      userId: req.user.id,
+      eventId: saved.id,
+      action,
+      title: saved.title,
+    });
+
     return res.json(saved);
   } catch (error) {
-    console.error("Error updating event", error);
+    logger.error("Error updating event", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      eventId: id,
+    });
     return res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -316,7 +357,13 @@ router.delete("/events/:id", requireAuth, async (req, res) => {
       try {
         await deleteFromS3(image.image_url);
       } catch (error) {
-        console.error("Error deleting image from S3:", error);
+        logger.error("Error deleting image from S3", {
+          error: error.message,
+          stack: error.stack,
+          userId: req.user?.id,
+          eventId: id,
+          imageUrl: image.image_url,
+        });
         // Continue deleting other images even if one fails
       }
     }
@@ -333,9 +380,20 @@ router.delete("/events/:id", requireAuth, async (req, res) => {
       newData: null,
     });
 
+    logger.info("Event deleted successfully", {
+      userId: req.user.id,
+      eventId: existing.id,
+      title: existing.title,
+    });
+
     return res.status(204).end();
   } catch (error) {
-    console.error("Error deleting event", error);
+    logger.error("Error deleting event", {
+      error: error.message,
+      stack: error.stack,
+      userId: req.user?.id,
+      eventId: id,
+    });
     return res.status(500).json({ message: "Internal server error" });
   }
 });

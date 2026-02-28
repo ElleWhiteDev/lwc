@@ -5,6 +5,7 @@ import { pool } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
 import { logAudit } from "../audit.js";
 import { sendNewUserWelcomeEmail, sendSuperuserRequestEmail } from "../utils/email.js";
+import logger from "../utils/logger.js";
 
 const router = express.Router();
 
@@ -14,9 +15,7 @@ function requireMainAdmin(req, res, next) {
 	const adminEmail = process.env.ADMIN_EMAIL;
 
 	if (!adminEmail) {
-		console.error(
-			"ADMIN_EMAIL is not set; user management routes are disabled.",
-		);
+		logger.error("ADMIN_EMAIL is not set; user management routes are disabled.");
 		return res.status(500).json({ message: "Server configuration error" });
 	}
 
@@ -46,7 +45,7 @@ router.get("/users", async (req, res) => {
 
     return res.json({ users });
   } catch (error) {
-    console.error("Error fetching users", error);
+    logger.error("Error fetching users", { error: error.message, stack: error.stack });
     return res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -105,9 +104,11 @@ router.post("/users", async (req, res) => {
     // Send welcome email with password setup link
     await sendNewUserWelcomeEmail(saved.email, resetToken, saved.name);
 
+    logger.info("User created", { userId: req.user.id, newUserId: saved.id, email: saved.email, role: saved.role });
+
     return res.status(201).json(saved);
   } catch (error) {
-    console.error("Error creating user", error);
+    logger.error("Error creating user", { error: error.message, stack: error.stack });
     if (error.code === "23505") {
       return res.status(409).json({ message: "Email already in use" });
     }
@@ -119,11 +120,7 @@ router.put("/users/:id", async (req, res) => {
   const { id } = req.params;
   const { name, email, password } = req.body ?? {};
 
-  console.log("PUT /api/admin/users/:id - User ID:", id);
-  console.log("Request body:", { name, email, passwordProvided: !!password });
-
   if (!name && !email && !password) {
-    console.log("No fields to update");
     return res.status(400).json({ message: "Nothing to update" });
   }
 
@@ -134,20 +131,16 @@ router.put("/users/:id", async (req, res) => {
     );
 
     if (existingResult.rows.length === 0) {
-      console.log("User not found:", id);
       return res.status(404).json({ message: "User not found" });
     }
 
     const existing = existingResult.rows[0];
-    console.log("Existing user:", { id: existing.id, email: existing.email, name: existing.name });
 
     const nextName = name ?? existing.name;
     const nextEmail = email ?? existing.email;
     const nextPasswordHash = password
       ? await bcrypt.hash(password, 10)
       : existing.password_hash;
-
-    console.log("Updating user with:", { nextName, nextEmail, passwordChanged: !!password });
 
     const updateResult = await pool.query(
       `
@@ -182,9 +175,16 @@ router.put("/users/:id", async (req, res) => {
       newData: { id: saved.id, email: saved.email, name: saved.name },
     });
 
+    logger.info("User updated", {
+      userId: req.user.id,
+      targetUserId: saved.id,
+      action,
+      email: saved.email
+    });
+
     return res.json(saved);
   } catch (error) {
-    console.error("Error updating user", error);
+    logger.error("Error updating user", { userId: req.user.id, targetUserId: id, error: error.message, stack: error.stack });
     if (error.code === "23505") {
       return res.status(409).json({ message: "Email already in use" });
     }
@@ -242,9 +242,16 @@ router.put("/users/:id/role", async (req, res) => {
       newData: { role: saved.role },
     });
 
+    logger.info("User role updated", {
+      userId: req.user.id,
+      targetUserId: saved.id,
+      oldRole: existing.role,
+      newRole: saved.role
+    });
+
     return res.json(saved);
   } catch (error) {
-    console.error("Error updating user role", error);
+    logger.error("Error updating user role", { userId: req.user.id, targetUserId: id, error: error.message, stack: error.stack });
     return res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -290,9 +297,15 @@ router.delete("/users/:id", async (req, res) => {
       newData: null,
     });
 
+    logger.info("User deleted", {
+      userId: req.user.id,
+      deletedUserId: existing.id,
+      email: existing.email
+    });
+
     return res.status(204).end();
   } catch (error) {
-    console.error("Error deleting user", error);
+    logger.error("Error deleting user", { userId: req.user.id, targetUserId: id, error: error.message, stack: error.stack });
     return res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -356,9 +369,11 @@ router.put("/me", async (req, res) => {
       newData: { id: saved.id, email: saved.email, name: saved.name },
     });
 
+    logger.info("Profile updated", { userId, action, email: saved.email });
+
     return res.json(saved);
   } catch (error) {
-    console.error("Error updating profile", error);
+    logger.error("Error updating profile", { userId: req.user.id, error: error.message, stack: error.stack });
     if (error.code === "23505") {
       return res.status(409).json({ message: "Email already in use" });
     }
@@ -401,9 +416,11 @@ router.post("/request-superuser", async (req, res) => {
       newData: { requested_role: "superuser" },
     });
 
+    logger.info("Superuser access requested", { userId, email: user.email, currentRole: user.role });
+
     return res.json({ message: "Superuser access request sent to admin" });
   } catch (error) {
-    console.error("Error requesting superuser access", error);
+    logger.error("Error requesting superuser access", { userId: req.user.id, error: error.message, stack: error.stack });
     return res.status(500).json({ message: "Failed to send request" });
   }
 });
@@ -437,7 +454,7 @@ router.get("/audit-logs", async (req, res) => {
 
     return res.json({ logs: result.rows });
   } catch (error) {
-    console.error("Error fetching audit logs", error);
+    logger.error("Error fetching audit logs", { userId: req.user.id, error: error.message, stack: error.stack });
     return res.status(500).json({ message: "Internal server error" });
   }
 });

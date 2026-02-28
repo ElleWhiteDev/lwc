@@ -1,5 +1,6 @@
 import pg from "pg";
 import bcrypt from "bcrypt";
+import logger from "./utils/logger.js";
 
 const { Pool } = pg;
 
@@ -11,6 +12,7 @@ if (!connectionString) {
   );
 }
 
+// Configure connection pool with optimized settings
 const pool = new Pool({
   connectionString,
   ssl: connectionString.includes("localhost")
@@ -18,19 +20,51 @@ const pool = new Pool({
     : {
         rejectUnauthorized: false,
       },
+  // Connection pool configuration
+  max: parseInt(process.env.DB_POOL_MAX, 10) || 20, // Maximum number of clients in the pool
+  min: parseInt(process.env.DB_POOL_MIN, 10) || 2, // Minimum number of clients in the pool
+  idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT, 10) || 30000, // Close idle clients after 30 seconds
+  connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT, 10) || 10000, // Return error after 10 seconds if connection cannot be established
+  // Query timeout
+  query_timeout: parseInt(process.env.DB_QUERY_TIMEOUT, 10) || 30000, // Timeout queries after 30 seconds
 });
 
+// Log pool errors
+pool.on('error', (err, client) => {
+  logger.error('Unexpected error on idle database client', {
+    error: err.message,
+    stack: err.stack
+  });
+});
+
+// Log successful connection
+pool.on('connect', (client) => {
+  logger.debug('New database client connected');
+});
+
+// Log client removal
+pool.on('remove', (client) => {
+  logger.debug('Database client removed from pool');
+});
+
+/**
+ * Initialize database schema and seed data
+ * Creates all necessary tables and indexes if they don't exist
+ */
 async function initDb() {
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS users (
-      id SERIAL PRIMARY KEY,
-      email TEXT UNIQUE NOT NULL,
-      name TEXT NOT NULL,
-      password_hash TEXT NOT NULL,
-      role TEXT NOT NULL DEFAULT 'user',
-      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-    );
-  `);
+  try {
+    logger.info('Initializing database schema...');
+
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        email TEXT UNIQUE NOT NULL,
+        name TEXT NOT NULL,
+        password_hash TEXT NOT NULL,
+        role TEXT NOT NULL DEFAULT 'user',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      );
+    `);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS site_content (
@@ -152,42 +186,91 @@ async function initDb() {
     CREATE UNIQUE INDEX IF NOT EXISTS idx_newsletter_subscribers_email ON newsletter_subscribers(email);
   `);
 
-  await seedAdminUser();
+    logger.info('Database schema initialized successfully');
+
+    await seedAdminUser();
+  } catch (error) {
+    logger.error('Error initializing database', {
+      error: error.message,
+      stack: error.stack
+    });
+    throw error;
+  }
 }
 
+/**
+ * Seed or update the admin user
+ * Creates a new admin user or updates existing one based on environment variables
+ */
 async function seedAdminUser() {
-  const email = process.env.ADMIN_EMAIL;
-  const password = process.env.ADMIN_PASSWORD;
-  const name = process.env.ADMIN_NAME || "Admin";
+  try {
+    const email = process.env.ADMIN_EMAIL;
+    const password = process.env.ADMIN_PASSWORD;
+    const name = process.env.ADMIN_NAME || "Admin";
 
-  if (!email || !password) {
-    console.warn(
-      "ADMIN_EMAIL or ADMIN_PASSWORD is not set; skipping admin user seeding.",
-    );
-    return;
-  }
+    if (!email || !password) {
+      logger.warn("ADMIN_EMAIL or ADMIN_PASSWORD is not set; skipping admin user seeding.");
+      return;
+    }
 
-  const existing = await pool.query("SELECT id FROM users WHERE email = $1", [
-    email,
-  ]);
+    const existing = await pool.query("SELECT id FROM users WHERE email = $1", [
+      email,
+    ]);
 
-  const passwordHash = await bcrypt.hash(password, 10);
+    const passwordHash = await bcrypt.hash(password, 10);
 
-  if (existing.rows.length > 0) {
-    // Update existing admin user's password, name, and role
-    await pool.query(
-      "UPDATE users SET password_hash = $1, name = $2, role = $3 WHERE email = $4",
-      [passwordHash, name, "admin", email],
-    );
-    console.log(`Updated admin user with email ${email}`);
-  } else {
-    // Create new admin user
-    await pool.query(
-      "INSERT INTO users (email, name, password_hash, role) VALUES ($1, $2, $3, $4)",
-      [email, name, passwordHash, "admin"],
-    );
-    console.log(`Seeded admin user with email ${email}`);
+    if (existing.rows.length > 0) {
+      // Update existing admin user's password, name, and role
+      await pool.query(
+        "UPDATE users SET password_hash = $1, name = $2, role = $3 WHERE email = $4",
+        [passwordHash, name, "admin", email],
+      );
+      logger.info(`Updated admin user`, { email });
+    } else {
+      // Create new admin user
+      await pool.query(
+        "INSERT INTO users (email, name, password_hash, role) VALUES ($1, $2, $3, $4)",
+        [email, name, passwordHash, "admin"],
+      );
+      logger.info(`Seeded admin user`, { email });
+    }
+  } catch (error) {
+    logger.error('Error seeding admin user', {
+      error: error.message,
+      stack: error.stack
+    });
+    throw error;
   }
 }
 
-export { pool, initDb };
+/**
+ * Get database pool statistics
+ * Useful for monitoring and debugging connection pool health
+ */
+function getPoolStats() {
+  return {
+    totalCount: pool.totalCount,
+    idleCount: pool.idleCount,
+    waitingCount: pool.waitingCount,
+  };
+}
+
+/**
+ * Gracefully close all database connections
+ * Should be called during application shutdown
+ */
+async function closePool() {
+  try {
+    logger.info('Closing database connection pool...');
+    await pool.end();
+    logger.info('Database connection pool closed successfully');
+  } catch (error) {
+    logger.error('Error closing database pool', {
+      error: error.message,
+      stack: error.stack
+    });
+    throw error;
+  }
+}
+
+export { pool, initDb, getPoolStats, closePool };

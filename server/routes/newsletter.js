@@ -3,6 +3,7 @@ import { pool } from "../db.js";
 import { requireAuth, requireAdmin } from "../middleware/auth.js";
 import { logAudit } from "../audit.js";
 import { sendEmail } from "../utils/email.js";
+import logger from "../utils/logger.js";
 import {
   syncContactToSendGrid,
   getDraftCampaigns,
@@ -54,6 +55,7 @@ router.post("/subscribe", async (req, res) => {
           [name || null, email]
         );
 
+        logger.info("Subscriber resubscribed", { email, name });
         return res.json({ message: "Successfully resubscribed to newsletter!" });
       }
 
@@ -67,9 +69,10 @@ router.post("/subscribe", async (req, res) => {
       [email, name || null]
     );
 
+    logger.info("New subscriber added", { email, name });
     res.status(201).json({ message: "Successfully subscribed to newsletter!" });
   } catch (error) {
-    console.error("Error subscribing to newsletter:", error);
+    logger.error("Error subscribing to newsletter", { email: req.body.email, error: error.message, stack: error.stack });
     res.status(500).json({ message: "Failed to subscribe to newsletter" });
   }
 });
@@ -111,9 +114,10 @@ router.post("/unsubscribe", async (req, res) => {
       [email]
     );
 
+    logger.info("Subscriber unsubscribed", { email });
     res.json({ message: "Successfully unsubscribed from newsletter" });
   } catch (error) {
-    console.error("Error unsubscribing from newsletter:", error);
+    logger.error("Error unsubscribing from newsletter", { email: req.body.email, error: error.message, stack: error.stack });
     res.status(500).json({ message: "Failed to unsubscribe from newsletter" });
   }
 });
@@ -144,9 +148,10 @@ router.get("/subscribers/export", requireAdmin, async (req, res) => {
 
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", "attachment; filename=newsletter-subscribers.csv");
+    logger.info("Subscribers exported", { count: result.rows.length, userId: req.user.id });
     res.send(csv);
   } catch (error) {
-    console.error("Error exporting subscribers:", error);
+    logger.error("Error exporting subscribers", { userId: req.user.id, error: error.message, stack: error.stack });
     res.status(500).json({ message: "Failed to export subscribers" });
   }
 });
@@ -159,9 +164,10 @@ router.get("/subscribers", requireAdmin, async (req, res) => {
        FROM newsletter_subscribers
        ORDER BY subscribed_at DESC`
     );
+    logger.info("Subscribers fetched", { count: result.rows.length, userId: req.user.id });
     res.json(result.rows);
   } catch (error) {
-    console.error("Error fetching subscribers:", error);
+    logger.error("Error fetching subscribers", { userId: req.user.id, error: error.message, stack: error.stack });
     res.status(500).json({ message: "Failed to fetch subscribers" });
   }
 });
@@ -201,6 +207,7 @@ router.post("/subscribers", requireAdmin, async (req, res) => {
           newData: { status: "active", email, name }
         });
 
+        logger.info("Subscriber resubscribed (admin)", { email, name, userId: req.user.id, subscriberId: result.rows[0].id });
         return res.json(result.rows[0]);
       }
 
@@ -223,9 +230,10 @@ router.post("/subscribers", requireAdmin, async (req, res) => {
       newData: { email, name }
     });
 
+    logger.info("Subscriber added (admin)", { email, name, userId: req.user.id, subscriberId: result.rows[0].id });
     res.status(201).json(result.rows[0]);
   } catch (error) {
-    console.error("Error adding subscriber:", error);
+    logger.error("Error adding subscriber", { email: req.body.email, userId: req.user.id, error: error.message, stack: error.stack });
     res.status(500).json({ message: "Failed to add subscriber" });
   }
 });
@@ -263,9 +271,10 @@ router.put("/subscribers/:id", requireAdmin, async (req, res) => {
       newData: result.rows[0]
     });
 
+    logger.info("Subscriber updated", { subscriberId: id, email, name, status, userId: req.user.id });
     res.json(result.rows[0]);
   } catch (error) {
-    console.error("Error updating subscriber:", error);
+    logger.error("Error updating subscriber", { subscriberId: req.params.id, userId: req.user.id, error: error.message, stack: error.stack });
     res.status(500).json({ message: "Failed to update subscriber" });
   }
 });
@@ -295,9 +304,10 @@ router.delete("/subscribers/:id", requireAdmin, async (req, res) => {
       previousData: subscriber.rows[0]
     });
 
+    logger.info("Subscriber deleted", { subscriberId: id, email: subscriber.rows[0].email, userId: req.user.id });
     res.status(204).send();
   } catch (error) {
-    console.error("Error deleting subscriber:", error);
+    logger.error("Error deleting subscriber", { subscriberId: req.params.id, userId: req.user.id, error: error.message, stack: error.stack });
     res.status(500).json({ message: "Failed to delete subscriber" });
   }
 });
@@ -363,12 +373,13 @@ router.post("/send", requireAdmin, async (req, res) => {
       newData: { subject, recipients: subscribers.length, filter: recipients }
     });
 
+    logger.info("Newsletter sent", { subject, recipientCount: subscribers.length, filter: recipients, userId: req.user.id });
     res.json({
       message: "Newsletter sent successfully",
       recipientCount: subscribers.length
     });
   } catch (error) {
-    console.error("Error sending newsletter:", error);
+    logger.error("Error sending newsletter", { subject: req.body.subject, userId: req.user.id, error: error.message, stack: error.stack });
     res.status(500).json({ message: "Failed to send newsletter" });
   }
 });
@@ -432,12 +443,13 @@ router.post("/send-html", requireAdmin, async (req, res) => {
       newData: { subject, recipients: subscribers.length, filter: recipients }
     });
 
+    logger.info("HTML newsletter sent", { subject, recipientCount: subscribers.length, filter: recipients, userId: req.user.id });
     res.json({
       message: "Newsletter sent successfully",
       recipientCount: subscribers.length
     });
   } catch (error) {
-    console.error("Error sending HTML newsletter:", error);
+    logger.error("Error sending HTML newsletter", { subject: req.body.subject, userId: req.user.id, error: error.message, stack: error.stack });
     res.status(500).json({ message: "Failed to send newsletter" });
   }
 });
@@ -450,9 +462,10 @@ router.post("/send-html", requireAdmin, async (req, res) => {
 router.get("/campaigns/drafts", requireAdmin, async (req, res) => {
   try {
     const campaigns = await getDraftCampaigns();
+    logger.info("Draft campaigns fetched", { count: campaigns.length, userId: req.user.id });
     res.json(campaigns);
   } catch (error) {
-    console.error("Error fetching draft campaigns:", error);
+    logger.error("Error fetching draft campaigns", { userId: req.user.id, error: error.message, stack: error.stack });
     res.status(500).json({ message: "Failed to fetch draft campaigns from SendGrid" });
   }
 });
@@ -487,9 +500,10 @@ router.post("/campaigns/:campaignId/send", requireAdmin, async (req, res) => {
       newData: { campaignId, recipientCount: emails.length, filter: recipients }
     });
 
+    logger.info("Campaign sent", { campaignId, recipientCount: emails.length, filter: recipients, userId: req.user.id });
     res.json(response);
   } catch (error) {
-    console.error("Error sending campaign:", error);
+    logger.error("Error sending campaign", { campaignId: req.params.campaignId, userId: req.user.id, error: error.message, stack: error.stack });
     res.status(500).json({ message: "Failed to send campaign" });
   }
 });
@@ -511,9 +525,10 @@ router.post("/subscribers/:id/sync", requireAdmin, async (req, res) => {
     const subscriber = result.rows[0];
     await syncContactToSendGrid(subscriber.email, subscriber.name, subscriber.status);
 
+    logger.info("Subscriber synced to SendGrid", { subscriberId: id, email: subscriber.email, userId: req.user.id });
     res.json({ message: "Subscriber synced to SendGrid successfully" });
   } catch (error) {
-    console.error("Error syncing subscriber:", error);
+    logger.error("Error syncing subscriber", { subscriberId: req.params.id, userId: req.user.id, error: error.message, stack: error.stack });
     res.status(500).json({ message: "Failed to sync subscriber to SendGrid" });
   }
 });
@@ -533,11 +548,12 @@ router.post("/subscribers/sync-all", requireAdmin, async (req, res) => {
         await syncContactToSendGrid(subscriber.email, subscriber.name, subscriber.status);
         synced++;
       } catch (error) {
-        console.error(`Failed to sync ${subscriber.email}:`, error);
+        logger.error("Failed to sync individual subscriber", { email: subscriber.email, error: error.message, stack: error.stack });
         failed++;
       }
     }
 
+    logger.info("Sync all subscribers completed", { synced, failed, total: result.rows.length, userId: req.user.id });
     res.json({
       message: `Sync complete: ${synced} synced, ${failed} failed`,
       synced,
@@ -545,7 +561,7 @@ router.post("/subscribers/sync-all", requireAdmin, async (req, res) => {
       total: result.rows.length
     });
   } catch (error) {
-    console.error("Error syncing all subscribers:", error);
+    logger.error("Error syncing all subscribers", { userId: req.user.id, error: error.message, stack: error.stack });
     res.status(500).json({ message: "Failed to sync subscribers to SendGrid" });
   }
 });
@@ -554,9 +570,10 @@ router.post("/subscribers/sync-all", requireAdmin, async (req, res) => {
 router.get("/suppression-groups", requireAdmin, async (req, res) => {
   try {
     const groups = await getSuppressionGroups();
+    logger.info("Suppression groups fetched", { count: groups.length, userId: req.user.id });
     res.json(groups);
   } catch (error) {
-    console.error("Error fetching suppression groups:", error);
+    logger.error("Error fetching suppression groups", { userId: req.user.id, error: error.message, stack: error.stack });
     res.status(500).json({ message: "Failed to fetch suppression groups" });
   }
 });
@@ -571,9 +588,10 @@ router.post("/suppression-groups", requireAdmin, async (req, res) => {
     }
 
     const group = await createSuppressionGroup(name, description);
+    logger.info("Suppression group created", { name, description, userId: req.user.id });
     res.json(group);
   } catch (error) {
-    console.error("Error creating suppression group:", error);
+    logger.error("Error creating suppression group", { name: req.body.name, userId: req.user.id, error: error.message, stack: error.stack });
     res.status(500).json({ message: "Failed to create suppression group" });
   }
 });

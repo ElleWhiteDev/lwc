@@ -250,12 +250,22 @@ const Home = () => {
             ref={heroImageRef}
 	            onClick={createStarBurst}
 	            onTouchStart={createStarBurstFromTouch}
+            role="img"
+            aria-label="Decorative celebration graphic - click or tap to create colorful stars"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                createStarBurst(e);
+              }
+            }}
             style={{ cursor: "pointer", position: "relative" }}
           >
             {stars.map((star) => (
               <div
                 key={star.id}
                 className="star-particle"
+                aria-hidden="true"
                 style={{
                   left: `${star.x}px`,
                   top: `${star.y}px`,
@@ -273,29 +283,29 @@ const Home = () => {
       </section>
 
       {/* Pride Festival Highlight */}
-      <section className="pride-highlight section">
+      <section className="pride-highlight section" aria-labelledby="pride-festival-heading">
         <div className="container">
           <div className="highlight-card">
-            <h2>{prideFestivalTitle}</h2>
+            <h2 id="pride-festival-heading">{prideFestivalTitle}</h2>
             <p>{prideFestivalDescription}</p>
-            <div className="highlight-stats">
-              <div className="stat">
-                <span className="stat-number">{prideAttendees}</span>
-                <span className="stat-label">Attendees</span>
+            <div className="highlight-stats" role="list" aria-label="Pride Festival statistics">
+              <div className="stat" role="listitem">
+                <span className="stat-number" aria-label={`${prideAttendees} attendees`}>{prideAttendees}</span>
+                <span className="stat-label" aria-hidden="true">Attendees</span>
               </div>
-              <div className="stat">
-                <span className="stat-number">{prideVendors}</span>
-                <span className="stat-label">Vendors</span>
+              <div className="stat" role="listitem">
+                <span className="stat-number" aria-label={`${prideVendors} vendors`}>{prideVendors}</span>
+                <span className="stat-label" aria-hidden="true">Vendors</span>
               </div>
-              <div className="stat">
-                <span className="stat-number">{prideShows}</span>
-                <span className="stat-label">Shows</span>
+              <div className="stat" role="listitem">
+                <span className="stat-number" aria-label={`${prideShows} shows`}>{prideShows}</span>
+                <span className="stat-label" aria-hidden="true">Shows</span>
               </div>
             </div>
             {/* Photo Carousel Placeholder */}
             <div className="photo-carousel">
-              <div className="carousel-placeholder">
-                <span>📸</span>
+              <div className="carousel-placeholder" role="status" aria-label="Photo gallery placeholder">
+                <span aria-hidden="true">📸</span>
                 <p>Photo Gallery Coming Soon</p>
               </div>
             </div>
@@ -307,52 +317,52 @@ const Home = () => {
       </section>
 
       {/* What We Do */}
-      <section className="what-we-do section bg-light">
+      <section className="what-we-do section bg-light" aria-labelledby="what-we-do-heading">
         <div className="container">
-          <h2 className="section-title">
+          <h2 id="what-we-do-heading" className="section-title">
             What We <span>Do</span>
           </h2>
           <div className="services-grid">
-            <div className="service-card">
-              <div className="service-icon">🎉</div>
+            <article className="service-card">
+              <div className="service-icon" role="img" aria-label="Party celebration emoji">🎉</div>
               <h3>Community Events</h3>
               <p>
                 From pride festivals to community picnics, we create spaces for
                 celebration and connection.
               </p>
-            </div>
-            <div className="service-card">
-              <div className="service-icon">🤝</div>
+            </article>
+            <article className="service-card">
+              <div className="service-icon" role="img" aria-label="Handshake emoji">🤝</div>
               <h3>Volunteer Programs</h3>
               <p>
                 Make a difference in your community through our volunteer
                 opportunities and outreach programs.
               </p>
-            </div>
-            <div className="service-card">
-              <div className="service-icon">💜</div>
+            </article>
+            <article className="service-card">
+              <div className="service-icon" role="img" aria-label="Purple heart emoji">💜</div>
               <h3>Support Resources</h3>
               <p>
                 Access resources, connect with allies, and find support within
                 our inclusive community.
               </p>
-            </div>
-            <div className="service-card">
-              <div className="service-icon">📣</div>
+            </article>
+            <article className="service-card">
+              <div className="service-icon" role="img" aria-label="Megaphone emoji">📣</div>
               <h3>Advocacy</h3>
               <p>
                 We advocate for equality and work to create positive change in
                 our local community.
               </p>
-            </div>
+            </article>
           </div>
         </div>
       </section>
 
       {/* News Section */}
-      <section className="news section">
+      <section className="news section" aria-labelledby="news-heading">
         <div className="container">
-          <h2 className="section-title">
+          <h2 id="news-heading" className="section-title">
             Latest <span>News</span>
           </h2>
           <div className="news-grid">
@@ -361,14 +371,23 @@ const Home = () => {
                 key={newsItem.id}
                 className={index === 0 ? "news-card featured" : "news-card"}
                 onClick={() => openNewsModal(newsItem)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    openNewsModal(newsItem);
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-label={`Read more about ${newsItem.title}`}
                 style={{ cursor: 'pointer' }}
               >
-                <div className={`news-image ${newsItem.gradient}`}></div>
+                <div className={`news-image ${newsItem.gradient}`} aria-hidden="true"></div>
                 <div className="news-content">
-                  <span className="news-date">{newsItem.date}</span>
+                  <time className="news-date" dateTime={newsItem.date}>{newsItem.date}</time>
                   <h3>{newsItem.title}</h3>
                   <p>{newsItem.excerpt}</p>
-                  <span className="news-link">Read More →</span>
+                  <span className="news-link" aria-hidden="true">Read More →</span>
                 </div>
               </article>
             ))}
@@ -377,16 +396,21 @@ const Home = () => {
       </section>
 
       {/* Newsletter Subscription */}
-      <section className="newsletter-section section" style={{ background: "linear-gradient(135deg, #f5f3ff 0%, #faf5ff 100%)" }}>
+      <section className="newsletter-section section" aria-labelledby="newsletter-heading" style={{ background: "linear-gradient(135deg, #f5f3ff 0%, #faf5ff 100%)" }}>
         <div className="container">
           <div className="newsletter-content" style={{ maxWidth: "600px", margin: "0 auto", textAlign: "center" }}>
-            <h2 style={{ marginBottom: "var(--spacing-md)" }}>Stay Connected</h2>
+            <h2 id="newsletter-heading" style={{ marginBottom: "var(--spacing-md)" }}>Stay Connected</h2>
             <p style={{ marginBottom: "var(--spacing-xl)", color: "var(--color-text-light)" }}>
               Subscribe to our newsletter to receive updates about upcoming events, community news, and ways to get involved.
             </p>
-            <form onSubmit={handleNewsletterSubmit} className="newsletter-form" style={{ display: "flex", flexDirection: "column", gap: "var(--spacing-md)" }}>
+            <form onSubmit={handleNewsletterSubmit} className="newsletter-form" aria-label="Newsletter subscription form" style={{ display: "flex", flexDirection: "column", gap: "var(--spacing-md)" }}>
+              <label htmlFor="newsletter-name" className="visually-hidden">
+                Your name (optional)
+              </label>
               <input
                 type="text"
+                id="newsletter-name"
+                name="name"
                 placeholder="Your name (optional)"
                 value={newsletterName}
                 onChange={(e) => setNewsletterName(e.target.value)}
@@ -401,12 +425,18 @@ const Home = () => {
                 onFocus={(e) => e.target.style.borderColor = "var(--primary-purple)"}
                 onBlur={(e) => e.target.style.borderColor = "#e5e7eb"}
               />
+              <label htmlFor="newsletter-email" className="visually-hidden">
+                Your email address (required)
+              </label>
               <input
                 type="email"
+                id="newsletter-email"
+                name="email"
                 placeholder="Your email address *"
                 value={newsletterEmail}
                 onChange={(e) => setNewsletterEmail(e.target.value)}
                 required
+                aria-required="true"
                 style={{
                   padding: "var(--spacing-md)",
                   borderRadius: "var(--radius-md)",
@@ -422,6 +452,7 @@ const Home = () => {
                 type="submit"
                 className="btn btn-primary"
                 disabled={subscribing}
+                aria-disabled={subscribing}
                 style={{ width: "100%" }}
               >
                 {subscribing ? "Subscribing..." : "Subscribe to Newsletter"}
@@ -460,6 +491,9 @@ const Home = () => {
         <div
           className="event-modal-overlay"
           onClick={closeNewsModal}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="news-modal-title"
           style={{
             position: 'fixed',
             top: 0,
@@ -512,14 +546,15 @@ const Home = () => {
               }}
               onMouseEnter={(e) => e.target.style.background = 'rgba(0, 0, 0, 0.7)'}
               onMouseLeave={(e) => e.target.style.background = 'rgba(0, 0, 0, 0.5)'}
-              aria-label="Close modal"
+              aria-label="Close news dialog"
             >
               ×
             </button>
 
             {/* News Content */}
             <div style={{ padding: 'var(--spacing-xl)' }}>
-              <span
+              <time
+                dateTime={selectedNews.date}
                 style={{
                   display: 'inline-block',
                   color: 'var(--primary-purple)',
@@ -529,9 +564,9 @@ const Home = () => {
                 }}
               >
                 {selectedNews.date}
-              </span>
+              </time>
 
-              <h2 style={{ marginBottom: 'var(--spacing-lg)' }}>
+              <h2 id="news-modal-title" style={{ marginBottom: 'var(--spacing-lg)' }}>
                 {selectedNews.title}
               </h2>
 

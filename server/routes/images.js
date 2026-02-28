@@ -4,6 +4,7 @@ import { pool } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
 import { uploadToS3, deleteFromS3 } from "../utils/s3.js";
 import { logAudit } from "../audit.js";
+import logger from "../utils/logger.js";
 
 const router = express.Router();
 
@@ -74,9 +75,11 @@ router.post("/events/:id/images", requireAuth, upload.array("images", 10), async
       newData: { count: uploadedImages.length, images: uploadedImages },
     });
 
+    logger.info("Event images uploaded", { userId: req.user.id, eventId: id, count: uploadedImages.length });
+
     return res.status(201).json({ images: uploadedImages });
   } catch (error) {
-    console.error("Error uploading images", error);
+    logger.error("Error uploading images", { eventId: id, error: error.message, stack: error.stack });
     return res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -96,7 +99,7 @@ router.get("/events/:id/images", async (req, res) => {
 
     return res.json({ images: result.rows });
   } catch (error) {
-    console.error("Error fetching images", error);
+    logger.error("Error fetching images", { eventId: id, error: error.message, stack: error.stack });
     return res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -133,9 +136,11 @@ router.delete("/events/:eventId/images/:imageId", requireAuth, async (req, res) 
       newData: null,
     });
 
+    logger.info("Event image deleted", { userId: req.user.id, eventId, imageId });
+
     return res.status(204).end();
   } catch (error) {
-    console.error("Error deleting image", error);
+    logger.error("Error deleting image", { eventId, imageId, error: error.message, stack: error.stack });
     return res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -167,9 +172,11 @@ router.put("/events/:id/images/reorder", requireAuth, async (req, res) => {
       newData: { imageIds },
     });
 
+    logger.info("Event images reordered", { userId: req.user.id, eventId: id, count: imageIds.length });
+
     return res.json({ message: "Images reordered successfully" });
   } catch (error) {
-    console.error("Error reordering images", error);
+    logger.error("Error reordering images", { eventId: id, error: error.message, stack: error.stack });
     return res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -195,9 +202,11 @@ router.post("/board-member-image", requireAuth, upload.single("image"), async (r
       newData: { imageUrl },
     });
 
+    logger.info("Board member image uploaded", { userId: req.user.id, imageUrl });
+
     return res.status(201).json({ imageUrl });
   } catch (error) {
-    console.error("Error uploading board member image", error);
+    logger.error("Error uploading board member image", { error: error.message, stack: error.stack });
     return res.status(500).json({ message: "Internal server error" });
   }
 });

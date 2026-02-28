@@ -16,8 +16,6 @@ const SiteConfigContext = createContext(DEFAULT_CONFIG);
 
 export const SiteConfigProvider = ({ children }) => {
   const [config, setConfig] = useState(DEFAULT_CONFIG);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     fetch("/api/content/siteConfig")
@@ -29,12 +27,9 @@ export const SiteConfigProvider = ({ children }) => {
         if (data.data) {
           setConfig({ ...DEFAULT_CONFIG, ...data.data });
         }
-        setLoading(false);
       })
       .catch((err) => {
         console.error("Error loading site config:", err);
-        setError(err);
-        setLoading(false);
         // Keep using DEFAULT_CONFIG on error
       });
   }, []);

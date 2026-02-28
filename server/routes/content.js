@@ -2,6 +2,7 @@ import express from "express";
 import { pool } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
 import { logAudit } from "../audit.js";
+import logger from "../utils/logger.js";
 
 const router = express.Router();
 
@@ -20,7 +21,7 @@ router.get("/:slug", async (req, res) => {
 
     return res.json(result.rows[0]);
   } catch (error) {
-    console.error("Error fetching content", error);
+    logger.error("Error fetching content", { slug, error: error.message, stack: error.stack });
     return res.status(500).json({ message: "Internal server error" });
   }
 });
@@ -78,9 +79,15 @@ router.put("/:slug", requireAuth, async (req, res) => {
       newData: saved.data,
     });
 
+    logger.info(`Content ${existing ? 'updated' : 'created'}`, {
+      userId: req.user.id,
+      slug,
+      action: existing ? "update" : "create"
+    });
+
     return res.json(saved);
   } catch (error) {
-    console.error("Error saving content", error);
+    logger.error("Error saving content", { slug, error: error.message, stack: error.stack });
     return res.status(500).json({ message: "Internal server error" });
   }
 });

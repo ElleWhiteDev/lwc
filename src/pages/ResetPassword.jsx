@@ -84,9 +84,11 @@ function ResetPassword() {
               marginTop: "var(--spacing-lg)",
               textAlign: "center",
             }}
+            role="alert"
+            aria-live="polite"
           >
             <p style={{ fontSize: "1.1rem", marginBottom: "var(--spacing-sm)" }}>
-              ✓ Your password has been reset successfully!
+              <span role="img" aria-label="Success checkmark">✓</span> Your password has been reset successfully!
             </p>
             <p>Redirecting to login page...</p>
           </div>
@@ -111,15 +113,17 @@ function ResetPassword() {
           Enter your new password below.
         </p>
 
-        <form className="login-form" onSubmit={handleSubmit}>
-          <label className="form-field">
+        <form className="login-form" onSubmit={handleSubmit} aria-label="Reset password form">
+          <label className="form-field" htmlFor="reset-new-password">
             <span>New Password</span>
             <div className="password-input-wrapper">
               <input
+                id="reset-new-password"
                 type={showPassword ? "text" : "password"}
                 value={newPassword}
                 onChange={(event) => setNewPassword(event.target.value)}
                 required
+                aria-required="true"
                 minLength={8}
                 autoComplete="new-password"
                 placeholder="At least 8 characters"
@@ -131,12 +135,12 @@ function ResetPassword() {
                 aria-label={showPassword ? "Hide password" : "Show password"}
               >
                 {showPassword ? (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                     <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
                     <line x1="1" y1="1" x2="23" y2="23"></line>
                   </svg>
                 ) : (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                     <circle cx="12" cy="12" r="3"></circle>
                   </svg>
@@ -145,14 +149,16 @@ function ResetPassword() {
             </div>
           </label>
 
-          <label className="form-field">
+          <label className="form-field" htmlFor="reset-confirm-password">
             <span>Confirm New Password</span>
             <div className="password-input-wrapper">
               <input
+                id="reset-confirm-password"
                 type={showConfirmPassword ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(event) => setConfirmPassword(event.target.value)}
                 required
+                aria-required="true"
                 minLength={8}
                 autoComplete="new-password"
                 placeholder="Re-enter your password"
@@ -164,12 +170,12 @@ function ResetPassword() {
                 aria-label={showConfirmPassword ? "Hide password" : "Show password"}
               >
                 {showConfirmPassword ? (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                     <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
                     <line x1="1" y1="1" x2="23" y2="23"></line>
                   </svg>
                 ) : (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                     <circle cx="12" cy="12" r="3"></circle>
                   </svg>
@@ -178,9 +184,14 @@ function ResetPassword() {
             </div>
           </label>
 
-          {error && <p className="form-error" role="alert">{error}</p>}
+          {error && <p className="form-error" role="alert" aria-live="assertive">{error}</p>}
 
-          <button type="submit" className="btn btn-primary" disabled={loading || !token}>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={loading || !token}
+            aria-disabled={loading || !token}
+          >
             {loading ? "Resetting..." : "Reset Password"}
           </button>
         </form>
@@ -193,6 +204,7 @@ function ResetPassword() {
               textDecoration: "none",
               fontWeight: 500,
             }}
+            aria-label="Go back to login page"
           >
             ← Back to Login
           </Link>

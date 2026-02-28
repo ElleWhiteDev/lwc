@@ -72,76 +72,76 @@ const About = () => {
       </section>
 
       {/* Mission Section */}
-      <section className="mission section">
+      <section className="mission section" aria-labelledby="mission-heading">
         <div className="container">
           <div className="mission-grid">
             <div className="mission-content">
-              <h2>{missionHeading}</h2>
+              <h2 id="mission-heading">{missionHeading}</h2>
               <p>{missionParagraph1}</p>
               <p>{missionParagraph2}</p>
             </div>
             <div className="mission-image">
-              <div className="mission-card">
-                <div className="mission-icon">💜</div>
+              <article className="mission-card">
+                <div className="mission-icon" role="img" aria-label="Purple heart emoji">💜</div>
                 <h3>Love</h3>
                 <p>At the heart of everything we do</p>
-              </div>
-              <div className="mission-card">
-                <div className="mission-icon">🌈</div>
+              </article>
+              <article className="mission-card">
+                <div className="mission-icon" role="img" aria-label="Rainbow emoji">🌈</div>
                 <h3>Inclusion</h3>
                 <p>Everyone belongs here</p>
-              </div>
-              <div className="mission-card">
-                <div className="mission-icon">✨</div>
+              </article>
+              <article className="mission-card">
+                <div className="mission-icon" role="img" aria-label="Sparkles emoji">✨</div>
                 <h3>Celebration</h3>
                 <p>Every life is worth celebrating</p>
-              </div>
+              </article>
             </div>
           </div>
         </div>
       </section>
 
       {/* Values Section */}
-      <section className="values section bg-light">
+      <section className="values section bg-light" aria-labelledby="values-heading">
         <div className="container">
-          <h2 className="section-title">Our Values</h2>
+          <h2 id="values-heading" className="section-title">Our Values</h2>
           <div className="values-grid">
-            <div className="value-card">
+            <article className="value-card">
               <h3>Inclusivity</h3>
               <p>
                 We welcome everyone regardless of background, identity, or
                 beliefs. Our community is built on acceptance and understanding.
               </p>
-            </div>
-            <div className="value-card">
+            </article>
+            <article className="value-card">
               <h3>Compassion</h3>
               <p>
                 We approach every interaction with empathy and care, creating
                 safe spaces for authentic connection.
               </p>
-            </div>
-            <div className="value-card">
+            </article>
+            <article className="value-card">
               <h3>Celebration</h3>
               <p>
                 We believe in celebrating life's moments, big and small, and
                 honoring the unique journey of every individual.
               </p>
-            </div>
-            <div className="value-card">
+            </article>
+            <article className="value-card">
               <h3>Community</h3>
               <p>
                 Together we're stronger. We foster meaningful connections that
                 create lasting impact in our community.
               </p>
-            </div>
+            </article>
           </div>
         </div>
       </section>
 
       {/* Board Section */}
-      <section className="board section">
+      <section className="board section" aria-labelledby="board-heading">
         <div className="container">
-          <h2 className="section-title">Meet Our Board</h2>
+          <h2 id="board-heading" className="section-title">Meet Our Board</h2>
           <p className="board-intro">
             Our dedicated board members volunteer their time and expertise to
             guide our mission.
@@ -149,21 +149,21 @@ const About = () => {
           <div className="board-grid">
             {boardMembers.length > 0 ? (
               boardMembers.map((member) => (
-                <div key={member.id} className="board-card">
+                <article key={member.id} className="board-card">
                   <div className="board-photo">
                     {member.image_url ? (
                       <img
                         src={member.image_url}
-                        alt={member.name}
+                        alt={`Photo of ${member.name}, ${member.title}`}
                         style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       />
                     ) : (
-                      <span>👤</span>
+                      <span role="img" aria-label="Default profile icon">👤</span>
                     )}
                   </div>
                   <h3>{member.name}</h3>
                   <p className="board-title">{member.title}</p>
-                </div>
+                </article>
               ))
             ) : (
               <p style={{ gridColumn: "1 / -1", textAlign: "center", color: "var(--color-text-light)" }}>

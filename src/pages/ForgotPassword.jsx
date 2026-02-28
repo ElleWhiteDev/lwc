@@ -58,27 +58,35 @@ function ForgotPassword() {
               marginBottom: "var(--spacing-lg)",
             }}
             role="alert"
+            aria-live="polite"
           >
             {message}
           </div>
         )}
 
-        <form className="login-form" onSubmit={handleSubmit}>
-          <label className="form-field">
+        <form className="login-form" onSubmit={handleSubmit} aria-label="Forgot password form">
+          <label className="form-field" htmlFor="forgot-password-email">
             <span>Email</span>
             <input
+              id="forgot-password-email"
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
+              aria-required="true"
               autoComplete="email"
               placeholder="your.email@example.com"
             />
           </label>
 
-          {error && <p className="form-error" role="alert">{error}</p>}
+          {error && <p className="form-error" role="alert" aria-live="assertive">{error}</p>}
 
-          <button type="submit" className="btn btn-primary" disabled={loading}>
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={loading}
+            aria-disabled={loading}
+          >
             {loading ? "Sending..." : "Send Reset Link"}
           </button>
         </form>
@@ -91,6 +99,7 @@ function ForgotPassword() {
               textDecoration: "none",
               fontWeight: 500,
             }}
+            aria-label="Go back to login page"
           >
             ← Back to Login
           </Link>

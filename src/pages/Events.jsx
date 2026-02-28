@@ -47,18 +47,29 @@ const Events = () => {
     setSelectedEvent(event);
     setCurrentImageIndex(0);
     setIsModalOpen(true);
-    // Prevent body scroll when modal is open
-    document.body.style.overflow = 'hidden';
   };
 
   const closeEventModal = () => {
     setIsModalOpen(false);
-    document.body.style.overflow = 'unset';
     setTimeout(() => {
       setSelectedEvent(null);
       setCurrentImageIndex(0);
     }, 300); // After animation
   };
+
+  // Handle body scroll when modal is open
+  useEffect(() => {
+    if (isModalOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+
+    // Cleanup on unmount
+    return () => {
+      document.body.style.overflow = 'unset';
+    };
+  }, [isModalOpen]);
 
   const nextImage = () => {
     if (selectedEvent && selectedEvent.images) {
@@ -122,12 +133,12 @@ const Events = () => {
       </section>
 
       {/* Upcoming Events - Expanded Card Layout */}
-      <section className="upcoming-events section">
+      <section className="upcoming-events section" aria-labelledby="upcoming-events-heading">
         <div className="container">
-          <h2 className="section-title">Upcoming Events</h2>
+          <h2 id="upcoming-events-heading" className="section-title">Upcoming Events</h2>
           <div className="upcoming-events-list">
             {loading ? (
-              <p>Loading events...</p>
+              <p role="status" aria-live="polite">Loading events...</p>
             ) : upcomingEvents.length > 0 ? (
               upcomingEvents.map((event) => {
                 // Get first image from images array or fall back to image_url
@@ -140,30 +151,41 @@ const Events = () => {
                     key={event.id}
                     className="upcoming-event-card"
                     onClick={() => openEventModal(event)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        openEventModal(event);
+                      }
+                    }}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`View details for ${event.title}`}
                   >
                     {featuredImage && (
                       <div
                         className="upcoming-event-image"
+                        role="img"
+                        aria-label={`Event image for ${event.title}`}
                         style={{
                           backgroundImage: `url(${featuredImage})`,
                         }}
                       ></div>
                     )}
-                    {!featuredImage && <div className="upcoming-event-image"></div>}
+                    {!featuredImage && <div className="upcoming-event-image" role="img" aria-label="No image available"></div>}
                     <div className="upcoming-event-content">
-                      <span className="upcoming-event-date">
+                      <time className="upcoming-event-date" dateTime={event.date}>
                         {formatDate(event.date)}
-                      </span>
+                      </time>
                       <h3>{event.title}</h3>
                       <div className="upcoming-event-details">
                         {event.time && (
                           <p className="upcoming-event-time">
-                            <span className="detail-icon">🕐</span> {event.time}
+                            <span className="detail-icon" role="img" aria-label="Time">🕐</span> {event.time}
                           </p>
                         )}
                         {event.location && (
                           <p className="upcoming-event-location">
-                            <span className="detail-icon">📍</span>{" "}
+                            <span className="detail-icon" role="img" aria-label="Location">📍</span>{" "}
                             {event.location}
                           </p>
                         )}
@@ -173,7 +195,7 @@ const Events = () => {
                           {event.description}
                         </p>
                       )}
-                      <span className="event-read-more">Read more...</span>
+                      <span className="event-read-more" aria-hidden="true">Read more...</span>
                     </div>
                   </article>
                 );
@@ -187,9 +209,9 @@ const Events = () => {
 
       {/* Past Events */}
       {pastEvents.length > 0 && (
-        <section className="past-events section bg-light">
+        <section className="past-events section bg-light" aria-labelledby="past-events-heading">
           <div className="container">
-            <h2 className="section-title">Past Highlights</h2>
+            <h2 id="past-events-heading" className="section-title">Past Highlights</h2>
             <div className="past-events-grid">
               {pastEvents.map((event) => {
                 // Get first image from images array or fall back to image_url
@@ -202,20 +224,31 @@ const Events = () => {
                     key={event.id}
                     className="past-event-card"
                     onClick={() => openEventModal(event)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        openEventModal(event);
+                      }
+                    }}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`View details for ${event.title}`}
                   >
                     {featuredImage && (
                       <div
                         className="past-event-image"
+                        role="img"
+                        aria-label={`Event image for ${event.title}`}
                         style={{
                           backgroundImage: `url(${featuredImage})`,
                         }}
                       ></div>
                     )}
-                    {!featuredImage && <div className="past-event-image"></div>}
+                    {!featuredImage && <div className="past-event-image" role="img" aria-label="No image available"></div>}
                     <div className="past-event-content">
-                      <span className="past-event-date">
+                      <time className="past-event-date" dateTime={event.date}>
                         {formatDate(event.date)}
-                      </span>
+                      </time>
                       <h3>{event.title}</h3>
                       {event.description && (
                         <p style={{
@@ -229,7 +262,7 @@ const Events = () => {
                           {event.description}
                         </p>
                       )}
-                      <span className="event-read-more">Read more...</span>
+                      <span className="event-read-more" aria-hidden="true">Read more...</span>
                     </div>
                   </article>
                 );
@@ -275,6 +308,9 @@ const Events = () => {
         <div
           className="event-modal-overlay"
           onClick={closeEventModal}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="event-modal-title"
           style={{
             position: 'fixed',
             top: 0,
@@ -327,7 +363,7 @@ const Events = () => {
               }}
               onMouseEnter={(e) => e.target.style.background = 'rgba(0, 0, 0, 0.7)'}
               onMouseLeave={(e) => e.target.style.background = 'rgba(0, 0, 0, 0.5)'}
-              aria-label="Close modal"
+              aria-label="Close event dialog"
             >
               ×
             </button>
@@ -399,6 +435,9 @@ const Events = () => {
 
                     {/* Image Counter */}
                     <div
+                      role="status"
+                      aria-live="polite"
+                      aria-atomic="true"
                       style={{
                         position: 'absolute',
                         bottom: 'var(--spacing-md)',
@@ -411,7 +450,7 @@ const Events = () => {
                         fontSize: '14px'
                       }}
                     >
-                      {currentImageIndex + 1} / {selectedEvent.images.length}
+                      Image {currentImageIndex + 1} of {selectedEvent.images.length}
                     </div>
                   </>
                 )}
@@ -420,7 +459,8 @@ const Events = () => {
 
             {/* Event Details */}
             <div style={{ padding: 'var(--spacing-xl)' }}>
-              <span
+              <time
+                dateTime={selectedEvent.date}
                 style={{
                   display: 'inline-block',
                   color: 'var(--primary-purple)',
@@ -430,9 +470,9 @@ const Events = () => {
                 }}
               >
                 {formatDate(selectedEvent.date)}
-              </span>
+              </time>
 
-              <h2 style={{ marginBottom: 'var(--spacing-md)' }}>
+              <h2 id="event-modal-title" style={{ marginBottom: 'var(--spacing-md)' }}>
                 {selectedEvent.title}
               </h2>
 
@@ -444,7 +484,7 @@ const Events = () => {
                     alignItems: 'center',
                     gap: 'var(--spacing-sm)'
                   }}>
-                    <span style={{ fontSize: '18px' }}>🕐</span>
+                    <span style={{ fontSize: '18px' }} role="img" aria-label="Time">🕐</span>
                     <strong>Time:</strong> {selectedEvent.time}
                   </p>
                 )}
@@ -455,7 +495,7 @@ const Events = () => {
                     alignItems: 'center',
                     gap: 'var(--spacing-sm)'
                   }}>
-                    <span style={{ fontSize: '18px' }}>📍</span>
+                    <span style={{ fontSize: '18px' }} role="img" aria-label="Location">📍</span>
                     <strong>Location:</strong> {selectedEvent.location}
                   </p>
                 )}

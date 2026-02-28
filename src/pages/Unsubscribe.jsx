@@ -12,13 +12,6 @@ function Unsubscribe() {
 	const email = searchParams.get("email");
 	const token = searchParams.get("token");
 
-	useEffect(() => {
-		// Auto-unsubscribe if email and token are present
-		if (email && token && !success && !error) {
-			handleUnsubscribe();
-		}
-	}, [email, token]);
-
 	const handleUnsubscribe = async () => {
 		if (!email || !token) {
 			setError("Invalid unsubscribe link. Please check your email for the correct link.");
@@ -52,6 +45,14 @@ function Unsubscribe() {
 			setLoading(false);
 		}
 	};
+
+	useEffect(() => {
+		// Auto-unsubscribe if email and token are present
+		if (email && token && !success && !error) {
+			handleUnsubscribe();
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [email, token]);
 
 	return (
 		<div className="unsubscribe-page">
