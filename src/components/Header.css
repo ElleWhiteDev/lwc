@@ -27,6 +27,17 @@
   text-decoration: none;
 }
 
+.logo-image {
+  height: 60px;
+  width: auto;
+  object-fit: contain;
+  transition: transform 0.2s ease;
+}
+
+.logo:hover .logo-image {
+  transform: scale(1.05);
+}
+
 .logo-circle {
   width: 60px;
   height: 60px;

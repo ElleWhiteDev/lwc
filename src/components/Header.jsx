@@ -57,7 +57,11 @@ const Header = () => {
           onClick={handleLogoClick}
           aria-label="A Life Worth Celebrating - Go to homepage"
         >
-	          <LogoWordmark />
+          {siteConfig.logoUrl ? (
+            <img src={siteConfig.logoUrl} alt="A Life Worth Celebrating" className="logo-image" />
+          ) : (
+            <LogoWordmark />
+          )}
         </Link>
 
         <nav

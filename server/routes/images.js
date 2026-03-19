@@ -211,4 +211,33 @@ router.post("/board-member-image", requireAuth, upload.single("image"), async (r
   }
 });
 
+// Upload site logo
+router.post("/site-logo", requireAuth, upload.single("image"), async (req, res) => {
+  const file = req.file;
+
+  if (!file) {
+    return res.status(400).json({ message: "No file uploaded" });
+  }
+
+  try {
+    const imageUrl = await uploadToS3(file.buffer, file.originalname, file.mimetype, "site-logo");
+
+    await logAudit({
+      userId: req.user.id,
+      action: "upload",
+      entityType: "site_logo",
+      entityId: null,
+      previousData: null,
+      newData: { imageUrl },
+    });
+
+    logger.info("Site logo uploaded", { userId: req.user.id, imageUrl });
+
+    return res.status(201).json({ imageUrl });
+  } catch (error) {
+    logger.error("Error uploading site logo", { error: error.message, stack: error.stack });
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 export default router;

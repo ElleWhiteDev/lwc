@@ -376,57 +376,526 @@ function HomeContentEditor() {
 	);
 }
 
-// Placeholder for About page editor
+// About Page Content Editor
 function AboutContentEditor() {
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState("");
+	const [success, setSuccess] = useState("");
+
+	// Hero Section
+	const [heroSubtitle, setHeroSubtitle] = useState(
+		"Learn more about our mission, values, and the community we're building together.",
+	);
+
+	// Mission Section
+	const [missionHeading, setMissionHeading] = useState("Our Mission");
+	const [missionParagraph1, setMissionParagraph1] = useState(
+		"A Life Worth Celebrating is a nonprofit organization dedicated to creating inclusive spaces where everyone feels valued, celebrated, and supported. We believe that every life deserves to be honored and that together, we can build a more loving and accepting community.",
+	);
+	const [missionParagraph2, setMissionParagraph2] = useState(
+		"Through events, volunteer programs, and community outreach, we work to foster connection, spread joy, and advocate for equality. Our goal is simple: to make our community a place where every person can live authentically and proudly.",
+	);
+
+	// CTA Section
+	const [ctaHeading, setCtaHeading] = useState("Get Involved");
+	const [ctaBody, setCtaBody] = useState(
+		"Whether you want to volunteer, attend an event, or support our cause, there are many ways to get involved with A Life Worth Celebrating.",
+	);
+
+	useEffect(() => {
+		let isMounted = true;
+
+		async function loadContent() {
+			setLoading(true);
+			setError("");
+			try {
+				const response = await fetch("/api/content/about");
+				if (!isMounted) return;
+				if (response.ok) {
+					const data = await response.json();
+					const content = data.data ?? {};
+
+					if (content.heroSubtitle) setHeroSubtitle(content.heroSubtitle);
+					if (content.missionHeading) setMissionHeading(content.missionHeading);
+					if (content.missionParagraph1) setMissionParagraph1(content.missionParagraph1);
+					if (content.missionParagraph2) setMissionParagraph2(content.missionParagraph2);
+					if (content.ctaHeading) setCtaHeading(content.ctaHeading);
+					if (content.ctaBody) setCtaBody(content.ctaBody);
+				}
+			} catch {
+				if (isMounted) {
+					setError("Failed to load content");
+				}
+			} finally {
+				if (isMounted) {
+					setLoading(false);
+				}
+			}
+		}
+
+		loadContent();
+
+		return () => {
+			isMounted = false;
+		};
+	}, []);
+
+	const handleSave = async (event) => {
+		event.preventDefault();
+		setError("");
+		setSuccess("");
+
+		const content = {
+			heroSubtitle,
+			missionHeading,
+			missionParagraph1,
+			missionParagraph2,
+			ctaHeading,
+			ctaBody,
+		};
+
+		try {
+			const response = await fetch("/api/content/about", {
+				method: "PUT",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				credentials: "include",
+				body: JSON.stringify({ data: content }),
+			});
+
+			if (!response.ok) {
+				const data = await response.json().catch(() => null);
+				throw new Error(data?.message || "Failed to save content");
+			}
+
+			setSuccess("About page content saved successfully!");
+			toast.success("About page content saved successfully!");
+			window.scrollTo({ top: 0, behavior: "smooth" });
+		} catch (err) {
+			setError(err.message || "Failed to save content");
+			toast.error(err.message || "Failed to save content");
+			window.scrollTo({ top: 0, behavior: "smooth" });
+		}
+	};
+
+	if (loading) {
+		return <p>Loading content...</p>;
+	}
+
 	return (
-		<div
-			style={{
-				padding: "var(--spacing-xl)",
-				background: "var(--color-background-alt)",
-				borderRadius: "var(--radius-md)",
-				marginTop: "var(--spacing-lg)",
-			}}
-		>
-			<h3>About Page Editor</h3>
-			<p>Visual form builder for About page coming soon...</p>
-			<p
+		<form onSubmit={handleSave} className="admin-form">
+			{error && <p className="form-error">{error}</p>}
+			{success && <p className="form-success">{success}</p>}
+
+			<h3
 				style={{
-					fontSize: "0.9rem",
-					color: "var(--color-text-light)",
-					marginTop: "var(--spacing-md)",
+					marginTop: "var(--spacing-xl)",
+					marginBottom: "var(--spacing-md)",
 				}}
 			>
-				This will include forms for: Mission statement, Info blocks (Love,
-				Inclusion, Celebration), and Board Members.
-			</p>
-		</div>
+				Hero Section
+			</h3>
+			<label className="form-field">
+				<span>Hero Subtitle</span>
+				<textarea
+					rows={3}
+					value={heroSubtitle}
+					onChange={(e) => setHeroSubtitle(e.target.value)}
+					placeholder="Learn more about our mission, values..."
+				/>
+			</label>
+
+			<h3
+				style={{
+					marginTop: "var(--spacing-xl)",
+					marginBottom: "var(--spacing-md)",
+				}}
+			>
+				Mission Section
+			</h3>
+			<label className="form-field">
+				<span>Mission Heading</span>
+				<input
+					type="text"
+					value={missionHeading}
+					onChange={(e) => setMissionHeading(e.target.value)}
+					placeholder="Our Mission"
+				/>
+			</label>
+			<label className="form-field">
+				<span>Mission Paragraph 1</span>
+				<textarea
+					rows={4}
+					value={missionParagraph1}
+					onChange={(e) => setMissionParagraph1(e.target.value)}
+					placeholder="A Life Worth Celebrating is a nonprofit organization..."
+				/>
+			</label>
+			<label className="form-field">
+				<span>Mission Paragraph 2</span>
+				<textarea
+					rows={4}
+					value={missionParagraph2}
+					onChange={(e) => setMissionParagraph2(e.target.value)}
+					placeholder="Through events, volunteer programs, and community outreach..."
+				/>
+			</label>
+
+			<h3
+				style={{
+					marginTop: "var(--spacing-xl)",
+					marginBottom: "var(--spacing-md)",
+				}}
+			>
+				Call to Action Section
+			</h3>
+			<label className="form-field">
+				<span>CTA Heading</span>
+				<input
+					type="text"
+					value={ctaHeading}
+					onChange={(e) => setCtaHeading(e.target.value)}
+					placeholder="Get Involved"
+				/>
+			</label>
+			<label className="form-field">
+				<span>CTA Body</span>
+				<textarea
+					rows={3}
+					value={ctaBody}
+					onChange={(e) => setCtaBody(e.target.value)}
+					placeholder="Whether you want to volunteer, attend an event..."
+				/>
+			</label>
+
+			<button
+				type="submit"
+				className="btn btn-primary"
+				style={{ marginTop: "var(--spacing-lg)" }}
+			>
+				Save About Page Content
+			</button>
+		</form>
 	);
 }
 
-// Placeholder for Site Config editor
+// Site Config Editor
 function SiteConfigEditor() {
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState("");
+	const [success, setSuccess] = useState("");
+	const [uploadingLogo, setUploadingLogo] = useState(false);
+
+	// General
+	const [siteName, setSiteName] = useState("A Life Worth Celebrating, Inc.");
+	const [siteTagline, setSiteTagline] = useState(
+		"Creating inclusive spaces for everyone",
+	);
+	const [orgName, setOrgName] = useState("A Life Worth Celebrating, Inc.");
+	const [contactEmail, setContactEmail] = useState(
+		"alifeworthcelebratinginc@gmail.com",
+	);
+
+	// Logo
+	const [logoUrl, setLogoUrl] = useState("");
+
+	// Social & Links
+	const [facebookUrl, setFacebookUrl] = useState("");
+	const [instagramUrl, setInstagramUrl] = useState("");
+	const [twitterUrl, setTwitterUrl] = useState("");
+	const [donateUrl, setDonateUrl] = useState("");
+
+	useEffect(() => {
+		let isMounted = true;
+
+		async function loadContent() {
+			setLoading(true);
+			setError("");
+			try {
+				const response = await fetch("/api/content/siteConfig");
+				if (!isMounted) return;
+				if (response.ok) {
+					const data = await response.json();
+					const content = data.data ?? {};
+
+					if (content.siteName) setSiteName(content.siteName);
+					if (content.siteTagline) setSiteTagline(content.siteTagline);
+					if (content.orgName) setOrgName(content.orgName);
+					if (content.contactEmail) setContactEmail(content.contactEmail);
+					if (content.logoUrl !== undefined) setLogoUrl(content.logoUrl);
+					if (content.facebookUrl) setFacebookUrl(content.facebookUrl);
+					if (content.instagramUrl !== undefined)
+						setInstagramUrl(content.instagramUrl);
+					if (content.twitterUrl !== undefined) setTwitterUrl(content.twitterUrl);
+					if (content.donateUrl) setDonateUrl(content.donateUrl);
+				}
+			} catch {
+				if (isMounted) {
+					setError("Failed to load site config");
+				}
+			} finally {
+				if (isMounted) {
+					setLoading(false);
+				}
+			}
+		}
+
+		loadContent();
+
+		return () => {
+			isMounted = false;
+		};
+	}, []);
+
+	const handleLogoUpload = async (event) => {
+		const file = event.target.files?.[0];
+		if (!file) return;
+
+		setUploadingLogo(true);
+		setError("");
+
+		try {
+			const formData = new FormData();
+			formData.append("image", file);
+
+			const response = await fetch("/api/site-logo", {
+				method: "POST",
+				credentials: "include",
+				body: formData,
+			});
+
+			if (!response.ok) {
+				const data = await response.json().catch(() => null);
+				throw new Error(data?.message || "Failed to upload logo");
+			}
+
+			const data = await response.json();
+			setLogoUrl(data.imageUrl);
+			toast.success("Logo uploaded successfully!");
+			event.target.value = "";
+		} catch (err) {
+			setError(err.message || "Failed to upload logo");
+			toast.error(err.message || "Failed to upload logo");
+		} finally {
+			setUploadingLogo(false);
+		}
+	};
+
+	const handleSave = async (event) => {
+		event.preventDefault();
+		setError("");
+		setSuccess("");
+
+		const content = {
+			siteName,
+			siteTagline,
+			orgName,
+			contactEmail,
+			logoUrl,
+			facebookUrl,
+			instagramUrl,
+			twitterUrl,
+			donateUrl,
+		};
+
+		try {
+			const response = await fetch("/api/content/siteConfig", {
+				method: "PUT",
+				headers: {
+					"Content-Type": "application/json",
+				},
+				credentials: "include",
+				body: JSON.stringify({ data: content }),
+			});
+
+			if (!response.ok) {
+				const data = await response.json().catch(() => null);
+				throw new Error(data?.message || "Failed to save site config");
+			}
+
+			setSuccess("Site configuration saved successfully!");
+			toast.success("Site configuration saved successfully!");
+			window.scrollTo({ top: 0, behavior: "smooth" });
+		} catch (err) {
+			setError(err.message || "Failed to save site config");
+			toast.error(err.message || "Failed to save site config");
+			window.scrollTo({ top: 0, behavior: "smooth" });
+		}
+	};
+
+	if (loading) {
+		return <p>Loading site config...</p>;
+	}
+
 	return (
-		<div
-			style={{
-				padding: "var(--spacing-xl)",
-				background: "var(--color-background-alt)",
-				borderRadius: "var(--radius-md)",
-				marginTop: "var(--spacing-lg)",
-			}}
-		>
-			<h3>Site Configuration Editor</h3>
-			<p>Visual form builder for site configuration coming soon...</p>
-			<p
+		<form onSubmit={handleSave} className="admin-form">
+			{error && <p className="form-error">{error}</p>}
+			{success && <p className="form-success">{success}</p>}
+
+			<h3
 				style={{
-					fontSize: "0.9rem",
-					color: "var(--color-text-light)",
-					marginTop: "var(--spacing-md)",
+					marginTop: "var(--spacing-xl)",
+					marginBottom: "var(--spacing-md)",
 				}}
 			>
-				This will include: Site name, tagline, social media links, contact info,
-				etc.
-			</p>
-		</div>
+				Logo
+			</h3>
+			<div className="form-field">
+				{logoUrl && (
+					<div style={{ marginBottom: "var(--spacing-md)" }}>
+						<img
+							src={logoUrl}
+							alt="Site logo preview"
+							style={{
+								height: "60px",
+								width: "auto",
+								objectFit: "contain",
+								display: "block",
+								background: "var(--color-background-alt)",
+								padding: "var(--spacing-sm)",
+								borderRadius: "var(--radius-sm)",
+								border: "1px solid var(--color-border)",
+							}}
+						/>
+					</div>
+				)}
+				<label className="form-field">
+					<span>
+						{logoUrl ? "Replace Logo" : "Upload Logo"}
+					</span>
+					<input
+						type="file"
+						accept="image/*"
+						onChange={handleLogoUpload}
+						disabled={uploadingLogo}
+					/>
+				</label>
+				{uploadingLogo && (
+					<p style={{ fontSize: "0.9rem", color: "var(--color-text-light)" }}>
+						Uploading...
+					</p>
+				)}
+				{logoUrl && (
+					<button
+						type="button"
+						className="btn btn-secondary"
+						style={{ marginTop: "var(--spacing-sm)" }}
+						onClick={() => setLogoUrl("")}
+					>
+						Remove Logo
+					</button>
+				)}
+				<p
+					style={{
+						fontSize: "0.85rem",
+						color: "var(--color-text-light)",
+						marginTop: "var(--spacing-xs)",
+					}}
+				>
+					If no logo is uploaded, the default wordmark will be shown in the
+					header.
+				</p>
+			</div>
+
+			<h3
+				style={{
+					marginTop: "var(--spacing-xl)",
+					marginBottom: "var(--spacing-md)",
+				}}
+			>
+				General
+			</h3>
+			<label className="form-field">
+				<span>Site Name</span>
+				<input
+					type="text"
+					value={siteName}
+					onChange={(e) => setSiteName(e.target.value)}
+					placeholder="A Life Worth Celebrating, Inc."
+				/>
+			</label>
+			<label className="form-field">
+				<span>Organization Name</span>
+				<input
+					type="text"
+					value={orgName}
+					onChange={(e) => setOrgName(e.target.value)}
+					placeholder="A Life Worth Celebrating, Inc."
+				/>
+			</label>
+			<label className="form-field">
+				<span>Tagline</span>
+				<input
+					type="text"
+					value={siteTagline}
+					onChange={(e) => setSiteTagline(e.target.value)}
+					placeholder="Creating inclusive spaces for everyone"
+				/>
+			</label>
+			<label className="form-field">
+				<span>Contact Email</span>
+				<input
+					type="email"
+					value={contactEmail}
+					onChange={(e) => setContactEmail(e.target.value)}
+					placeholder="contact@example.com"
+				/>
+			</label>
+
+			<h3
+				style={{
+					marginTop: "var(--spacing-xl)",
+					marginBottom: "var(--spacing-md)",
+				}}
+			>
+				Links
+			</h3>
+			<label className="form-field">
+				<span>Donate URL</span>
+				<input
+					type="url"
+					value={donateUrl}
+					onChange={(e) => setDonateUrl(e.target.value)}
+					placeholder="https://..."
+				/>
+			</label>
+			<label className="form-field">
+				<span>Facebook URL</span>
+				<input
+					type="url"
+					value={facebookUrl}
+					onChange={(e) => setFacebookUrl(e.target.value)}
+					placeholder="https://facebook.com/..."
+				/>
+			</label>
+			<label className="form-field">
+				<span>Instagram URL</span>
+				<input
+					type="url"
+					value={instagramUrl}
+					onChange={(e) => setInstagramUrl(e.target.value)}
+					placeholder="https://instagram.com/..."
+				/>
+			</label>
+			<label className="form-field">
+				<span>Twitter / X URL</span>
+				<input
+					type="url"
+					value={twitterUrl}
+					onChange={(e) => setTwitterUrl(e.target.value)}
+					placeholder="https://x.com/..."
+				/>
+			</label>
+
+			<button
+				type="submit"
+				className="btn btn-primary"
+				style={{ marginTop: "var(--spacing-lg)" }}
+			>
+				Save Site Configuration
+			</button>
+		</form>
 	);
 }
 

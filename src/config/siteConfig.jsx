@@ -10,6 +10,7 @@ const DEFAULT_CONFIG = {
   twitterUrl: "",
   donateUrl: "https://www.zeffy.com/en-US/ticketing/a-life-worth-celebrating-incs-shop",
   orgName: "A Life Worth Celebrating, Inc.",
+  logoUrl: "",
 };
 
 const SiteConfigContext = createContext(DEFAULT_CONFIG);
