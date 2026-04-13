@@ -203,6 +203,9 @@ const Footer = () => {
               <> · <Link to="/login">Login</Link></>
             )}
           </p>
+          <p className="footer-credit">
+            website by <a href="https://ellewhite.dev" target="_blank" rel="noopener noreferrer">ellewhite.dev</a>
+          </p>
         </div>
       </div>
     </footer>

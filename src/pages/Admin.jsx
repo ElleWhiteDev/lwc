@@ -601,10 +601,14 @@ function SiteConfigEditor() {
 	const [logoUrl, setLogoUrl] = useState("");
 
 	// Social & Links
-	const [facebookUrl, setFacebookUrl] = useState("");
+	const [facebookUrl, setFacebookUrl] = useState(
+		"https://www.facebook.com/profile.php?id=61576987598719",
+	);
 	const [instagramUrl, setInstagramUrl] = useState("");
 	const [twitterUrl, setTwitterUrl] = useState("");
-	const [donateUrl, setDonateUrl] = useState("");
+	const [donateUrl, setDonateUrl] = useState(
+		"https://www.zeffy.com/en-US/ticketing/a-life-worth-celebrating-incs-shop",
+	);
 
 	useEffect(() => {
 		let isMounted = true;
