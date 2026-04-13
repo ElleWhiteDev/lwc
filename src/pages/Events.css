@@ -232,41 +232,91 @@
   }
 }
 
-/* Modal Animations */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+/* Past event description — clamp to 3 lines */
+.past-event-description {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: var(--spacing-sm);
 }
 
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+/* Event modal layout — image gallery */
+.event-modal-gallery {
+  position: relative;
+  background: var(--black);
 }
 
-/* Modal Scrollbar Styling */
-.event-modal-content::-webkit-scrollbar {
-  width: 8px;
+.event-modal-gallery-img {
+  width: 100%;
+  height: auto;
+  max-height: 500px;
+  object-fit: contain;
+  display: block;
 }
 
-.event-modal-content::-webkit-scrollbar-track {
-  background: var(--light-gray);
+.carousel-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 24px;
+  cursor: pointer;
+  transition: background 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.event-modal-content::-webkit-scrollbar-thumb {
-  background: var(--primary-purple);
-  border-radius: 4px;
+.carousel-btn:hover {
+  background: rgba(0, 0, 0, 0.7);
 }
 
-.event-modal-content::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-purple-dark);
+.carousel-btn--prev { left: var(--spacing-md); }
+.carousel-btn--next { right: var(--spacing-md); }
+
+.carousel-counter {
+  position: absolute;
+  bottom: var(--spacing-md);
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.7);
+  color: white;
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: 14px;
 }
+
+/* Event modal body — details section */
+.event-modal-body {
+  padding: var(--spacing-xl);
+}
+
+.event-modal-body h2 {
+  margin-bottom: var(--spacing-md);
+}
+
+.event-modal-meta {
+  margin-bottom: var(--spacing-lg);
+}
+
+.event-detail-row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-bottom: var(--spacing-sm);
+  font-size: 18px;
+}
+
+.event-modal-description {
+  line-height: 1.6;
+  margin-bottom: var(--spacing-lg);
+  color: var(--dark-gray);
+}
+

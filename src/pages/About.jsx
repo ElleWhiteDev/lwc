@@ -155,7 +155,6 @@ const About = () => {
                       <img
                         src={member.image_url}
                         alt={`Photo of ${member.name}, ${member.title}`}
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
                       />
                     ) : (
                       <span role="img" aria-label="Default profile icon">👤</span>
@@ -166,9 +165,7 @@ const About = () => {
                 </article>
               ))
             ) : (
-              <p style={{ gridColumn: "1 / -1", textAlign: "center", color: "var(--color-text-light)" }}>
-                No board members to display yet.
-              </p>
+              <p className="board-empty">No board members to display yet.</p>
             )}
           </div>
         </div>

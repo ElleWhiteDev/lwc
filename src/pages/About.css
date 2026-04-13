@@ -190,6 +190,12 @@
   margin: 0;
 }
 
+.board-empty {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--color-text-light);
+}
+
 /* About CTA */
 .about-cta {
   background: var(--gradient-rainbow);

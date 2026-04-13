@@ -110,3 +110,19 @@
   outline-offset: 2px;
   border-radius: var(--radius-sm);
 }
+
+.forgot-password {
+  margin-top: var(--spacing-md);
+  text-align: center;
+}
+
+.forgot-password-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.forgot-password-link:hover {
+  text-decoration: underline;
+}

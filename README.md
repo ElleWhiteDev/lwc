@@ -27,11 +27,25 @@ A Life Worth Celebrating is committed to:
 
 ## 🚀 Tech Stack
 
-- **React 19** - Modern UI library
-- **Vite** - Next-generation frontend tooling
-- **React Router** - Client-side routing
-- **CSS3** - Custom styling with CSS variables
-- **Google Fonts** - Poppins, Dancing Script, and Pacifico fonts
+**Frontend**
+- **React 19** — UI library with hooks and Context API
+- **React Router 7** — Client-side routing and protected routes
+- **Vite** — Build tool and dev server (API proxy to Express on port 3000)
+- **Tiptap** — Rich text editor for the admin CMS
+- **@dnd-kit** — Drag-and-drop event reordering
+- **react-hot-toast** — Toast notifications
+- **CSS3** — Custom properties, no framework; WCAG 2.1 AA accessible
+
+**Backend**
+- **Express 5** — REST API server
+- **PostgreSQL** — Primary database (connection pool via `pg`)
+- **JWT + bcrypt** — Authentication with httpOnly cookies
+- **Helmet + express-rate-limit** — Security headers and rate limiting
+- **AWS S3** — Image storage with presigned URL upload
+- **SendGrid** — Transactional email (password reset, contact form)
+
+**Infrastructure**
+- **Heroku** — Hosting (Node.js buildpack, Heroku Postgres)
 
 ## 📋 Prerequisites
 
@@ -336,45 +350,72 @@ Once logged in to `/admin`, you can:
 
 ```
 lwc/
-├── public/              # Static assets
-│   └── vite.svg        # Favicon
-├── src/
-│   ├── assets/         # Images and SVGs
-│   │   └── images/     # Site images
-│   ├── components/     # Reusable components
-│   │   ├── Header.jsx
-│   │   ├── Footer.jsx
-│   │   └── ScrollToTop.jsx
-│   ├── config/         # Configuration files
-│   │   └── siteConfig.js
-│   ├── pages/          # Page components
-│   │   ├── Home.jsx
-│   │   ├── About.jsx
-│   │   └── Events.jsx
-│   ├── App.jsx         # Main app component
-│   ├── main.jsx        # Entry point
-│   └── index.css       # Global styles
-├── index.html          # HTML template
-├── package.json        # Dependencies
-├── vite.config.js      # Vite configuration
-├── static.json         # Heroku static config
-└── README.md           # This file
+├── server/                    # Express backend
+│   ├── index.js               # App bootstrap, middleware, route registration
+│   ├── db.js                  # PostgreSQL pool, schema init, admin seeding
+│   ├── audit.js               # Audit log writes
+│   ├── middleware/
+│   │   ├── auth.js            # JWT verification (requireAuth, requireAdmin)
+│   │   ├── security.js        # Helmet headers, rate limiters
+│   │   ├── errorHandler.js    # Centralized error + 404 handling
+│   │   └── requestLogger.js   # HTTP request logging
+│   ├── routes/
+│   │   ├── auth.js            # Login, logout, password reset, contact form
+│   │   ├── content.js         # CMS content (home, about, siteConfig)
+│   │   ├── events.js          # Event CRUD, image management, reordering
+│   │   ├── admin.js           # User management, audit log
+│   │   ├── boardMembers.js    # Board member profiles
+│   │   ├── images.js          # S3 presigned URL generation
+│   │   └── newsletter.js      # Subscribe / unsubscribe
+│   └── utils/
+│       ├── logger.js          # Structured logging (JSON in prod)
+│       ├── validation.js      # Input validation + ValidationError class
+│       ├── email.js           # SendGrid email helpers
+│       └── s3.js              # AWS S3 presigned URLs and deletion
+├── src/                       # React frontend
+│   ├── assets/images/         # SVG and image assets
+│   ├── components/            # Shared UI components
+│   │   ├── Header.jsx         # Fixed nav with mobile menu and donate button
+│   │   ├── Footer.jsx         # Contact form and copyright
+│   │   ├── LogoWordmark.jsx   # Rainbow-lettered logo
+│   │   ├── Modal.jsx          # Accessible overlay + close button
+│   │   ├── StarBurstTarget.jsx # Pride-colored click/tap particle effect
+│   │   ├── RequireAuth.jsx    # Route guard (redirects to /login)
+│   │   └── ScrollToTop.jsx    # Scroll reset on route change
+│   ├── hooks/
+│   │   ├── useModal.js        # Modal state, ESC key, body scroll lock
+│   │   └── useStarBurst.js    # Star particle state and event handlers
+│   ├── context/
+│   │   └── AuthContext.jsx    # User auth state, login/logout, useAuth hook
+│   ├── config/
+│   │   └── siteConfig.jsx     # Site-wide config from API, useSiteConfig hook
+│   ├── pages/
+│   │   ├── ComingSoon.jsx     # Landing page (route "/")
+│   │   ├── Home.jsx           # Main public page (route "/preview")
+│   │   ├── About.jsx          # Mission, values, board members
+│   │   ├── Events.jsx         # Upcoming and past events with modal detail
+│   │   ├── Admin.jsx          # Multi-tab CMS (content, events, users, audit)
+│   │   ├── Login.jsx          # Admin login
+│   │   ├── ForgotPassword.jsx # Password reset request
+│   │   ├── ResetPassword.jsx  # Password reset with token
+│   │   └── Unsubscribe.jsx    # Newsletter unsubscribe
+│   ├── App.jsx                # Router, Toaster config, layout shell
+│   ├── main.jsx               # React root, context providers
+│   └── index.css              # Global CSS variables, reset, utility classes
+├── index.html                 # HTML entry point
+├── vite.config.js             # Vite config (dev proxy → localhost:3000)
+├── package.json               # Scripts and dependencies
+├── Procfile                   # Heroku process definition
+└── .env.example               # Environment variable template
 ```
 
 ## ⚙️ Configuration
 
 ### Site Configuration
 
-Update site-wide settings in `src/config/siteConfig.js`:
+Site-wide settings (org name, tagline, social links, donate URL) are managed through the admin panel under the **Settings** tab and stored in the database. They are fetched on app load via `/api/content/siteConfig` and available throughout the frontend via the `useSiteConfig()` hook.
 
-```javascript
-export const SITE_CONFIG = {
-  facebookUrl: "your-facebook-url",
-  donateUrl: "your-donation-url",
-  contactEmail: "your-email@example.com",
-  orgName: "A Life Worth Celebrating, Inc.",
-};
-```
+Default fallback values are defined in `src/config/siteConfig.jsx` and are used if the API is unavailable.
 
 ### Styling
 

@@ -81,16 +81,8 @@ function Login() {
             {loading ? "Logging in..." : "Log In"}
           </button>
 
-          <div style={{ marginTop: "var(--spacing-md)", textAlign: "center" }}>
-            <Link
-              to="/forgot-password"
-              style={{
-                color: "var(--color-primary)",
-                textDecoration: "none",
-                fontWeight: 500,
-                fontSize: "0.95rem",
-              }}
-            >
+          <div className="forgot-password">
+            <Link to="/forgot-password" className="forgot-password-link">
               Forgot your password?
             </Link>
           </div>
