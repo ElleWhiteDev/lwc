@@ -157,6 +157,10 @@ function HomeContentEditor() {
 	const [prideVendors, setPrideVendors] = useState("35+");
 	const [prideShows, setPrideShows] = useState("8");
 
+	// Pride Festival Photos
+	const [prideFestivalPhotos, setPrideFestivalPhotos] = useState([]);
+	const [uploadProgress, setUploadProgress] = useState(null); // { current: filename, done: n, total: n }
+
 	// CTA Section
 	const [ctaHeading, setCtaHeading] = useState("Ready to Make a Difference?");
 	const [ctaBody, setCtaBody] = useState(
@@ -185,6 +189,8 @@ function HomeContentEditor() {
 					if (content.prideAttendees) setPrideAttendees(content.prideAttendees);
 					if (content.prideVendors) setPrideVendors(content.prideVendors);
 					if (content.prideShows) setPrideShows(content.prideShows);
+					if (Array.isArray(content.prideFestivalPhotos))
+						setPrideFestivalPhotos(content.prideFestivalPhotos);
 					if (content.ctaHeading) setCtaHeading(content.ctaHeading);
 					if (content.ctaBody) setCtaBody(content.ctaBody);
 				}
@@ -206,6 +212,58 @@ function HomeContentEditor() {
 		};
 	}, []);
 
+	const handlePhotoUpload = async (e) => {
+		const files = Array.from(e.target.files);
+		if (!files.length) return;
+		setError("");
+		let successCount = 0;
+		for (let i = 0; i < files.length; i++) {
+			const file = files[i];
+			setUploadProgress({ current: file.name, done: i, total: files.length });
+			try {
+				const formData = new FormData();
+				formData.append("image", file);
+				const res = await fetch("/api/pride-festival-image", {
+					method: "POST",
+					credentials: "include",
+					body: formData,
+				});
+				if (!res.ok) {
+					const data = await res.json().catch(() => null);
+					throw new Error(data?.message || "Upload failed");
+				}
+				const data = await res.json();
+				setPrideFestivalPhotos((prev) => [...prev, data.imageUrl]);
+				successCount++;
+			} catch (err) {
+				toast.error(`Failed to upload "${file.name}": ${err.message}`);
+			}
+		}
+		setUploadProgress(null);
+		e.target.value = "";
+		if (successCount > 0)
+			toast.success(`${successCount} photo${successCount > 1 ? "s" : ""} uploaded`);
+	};
+
+	const handlePhotoDelete = async (imageUrl) => {
+		try {
+			const res = await fetch("/api/pride-festival-image", {
+				method: "DELETE",
+				headers: { "Content-Type": "application/json" },
+				credentials: "include",
+				body: JSON.stringify({ imageUrl }),
+			});
+			if (!res.ok && res.status !== 204) {
+				const data = await res.json().catch(() => null);
+				throw new Error(data?.message || "Delete failed");
+			}
+			setPrideFestivalPhotos((prev) => prev.filter((url) => url !== imageUrl));
+			toast.success("Photo removed");
+		} catch (err) {
+			toast.error(err.message || "Failed to delete photo");
+		}
+	};
+
 	const handleSave = async (event) => {
 		event.preventDefault();
 		setError("");
@@ -218,6 +276,7 @@ function HomeContentEditor() {
 			prideAttendees,
 			prideVendors,
 			prideShows,
+			prideFestivalPhotos,
 			ctaHeading,
 			ctaBody,
 		};
@@ -337,6 +396,52 @@ function HomeContentEditor() {
 					/>
 				</label>
 			</div>
+
+			<h4 style={{ marginTop: "var(--spacing-lg)", marginBottom: "var(--spacing-sm)" }}>
+				Festival Photos
+			</h4>
+			<label className="form-field">
+				<span>Upload Photos (JPG, PNG — multiple allowed)</span>
+				<input
+					type="file"
+					accept="image/*"
+					multiple
+					disabled={uploadProgress !== null}
+					onChange={handlePhotoUpload}
+				/>
+			</label>
+			{uploadProgress !== null && (
+				<p style={{ color: "var(--medium-gray)", margin: 0, fontSize: "0.9rem" }}>
+					Uploading {uploadProgress.done + 1} of {uploadProgress.total}: <strong>{uploadProgress.current}</strong>
+				</p>
+			)}
+			{prideFestivalPhotos.length > 0 && (
+				<div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: "var(--spacing-sm)", marginTop: "var(--spacing-sm)" }}>
+					{prideFestivalPhotos.map((url) => (
+						<div key={url} style={{ position: "relative" }}>
+							<img
+								src={url}
+								alt="Festival photo"
+								style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: "var(--radius-md)" }}
+							/>
+							<button
+								type="button"
+								onClick={() => handlePhotoDelete(url)}
+								style={{
+									position: "absolute", top: 4, right: 4,
+									background: "rgba(0,0,0,0.6)", color: "#fff",
+									border: "none", borderRadius: "50%",
+									width: 24, height: 24, cursor: "pointer",
+									fontSize: "0.75rem", lineHeight: 1,
+								}}
+								aria-label="Remove photo"
+							>
+								✕
+							</button>
+						</div>
+					))}
+				</div>
+			)}
 
 			<h3
 				style={{
@@ -605,7 +710,8 @@ function SiteConfigEditor() {
 		"https://www.facebook.com/profile.php?id=61576987598719",
 	);
 	const [instagramUrl, setInstagramUrl] = useState("");
-	const [twitterUrl, setTwitterUrl] = useState("");
+	const [xUrl, setXUrl] = useState("");
+	const [tiktokUrl, setTiktokUrl] = useState("");
 	const [donateUrl, setDonateUrl] = useState(
 		"https://www.zeffy.com/en-US/ticketing/a-life-worth-celebrating-incs-shop",
 	);
@@ -631,7 +737,8 @@ function SiteConfigEditor() {
 					if (content.facebookUrl) setFacebookUrl(content.facebookUrl);
 					if (content.instagramUrl !== undefined)
 						setInstagramUrl(content.instagramUrl);
-					if (content.twitterUrl !== undefined) setTwitterUrl(content.twitterUrl);
+					if (content.xUrl !== undefined) setXUrl(content.xUrl);
+					if (content.tiktokUrl !== undefined) setTiktokUrl(content.tiktokUrl);
 					if (content.donateUrl) setDonateUrl(content.donateUrl);
 				}
 			} catch {
@@ -699,7 +806,8 @@ function SiteConfigEditor() {
 			logoUrl,
 			facebookUrl,
 			instagramUrl,
-			twitterUrl,
+			xUrl,
+			tiktokUrl,
 			donateUrl,
 		};
 
@@ -883,12 +991,21 @@ function SiteConfigEditor() {
 				/>
 			</label>
 			<label className="form-field">
-				<span>Twitter / X URL</span>
+				<span>X (Twitter) URL</span>
 				<input
 					type="url"
-					value={twitterUrl}
-					onChange={(e) => setTwitterUrl(e.target.value)}
+					value={xUrl}
+					onChange={(e) => setXUrl(e.target.value)}
 					placeholder="https://x.com/..."
+				/>
+			</label>
+			<label className="form-field">
+				<span>TikTok URL</span>
+				<input
+					type="url"
+					value={tiktokUrl}
+					onChange={(e) => setTiktokUrl(e.target.value)}
+					placeholder="https://tiktok.com/@..."
 				/>
 			</label>
 

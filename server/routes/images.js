@@ -211,6 +211,64 @@ router.post("/board-member-image", requireAuth, upload.single("image"), async (r
   }
 });
 
+// Upload pride festival photo
+router.post("/pride-festival-image", requireAuth, upload.single("image"), async (req, res) => {
+  const file = req.file;
+
+  if (!file) {
+    return res.status(400).json({ message: "No file uploaded" });
+  }
+
+  try {
+    const imageUrl = await uploadToS3(file.buffer, file.originalname, file.mimetype, "pride-festival");
+
+    await logAudit({
+      userId: req.user.id,
+      action: "upload",
+      entityType: "pride_festival_image",
+      entityId: null,
+      previousData: null,
+      newData: { imageUrl },
+    });
+
+    logger.info("Pride festival image uploaded", { userId: req.user.id, imageUrl });
+
+    return res.status(201).json({ imageUrl });
+  } catch (error) {
+    logger.error("Error uploading pride festival image", { error: error.message, stack: error.stack });
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Delete pride festival photo
+router.delete("/pride-festival-image", requireAuth, async (req, res) => {
+  const { imageUrl } = req.body;
+
+  if (!imageUrl) {
+    return res.status(400).json({ message: "imageUrl is required" });
+  }
+
+  try {
+    await deleteFromS3(imageUrl);
+
+    await logAudit({
+      userId: req.user.id,
+      action: "delete",
+      entityType: "pride_festival_image",
+      entityId: null,
+      previousData: { imageUrl },
+      newData: null,
+    });
+
+    logger.info("Pride festival image deleted", { userId: req.user.id, imageUrl });
+
+    return res.status(204).end();
+  } catch (error) {
+    logger.error("Error deleting pride festival image", { error: error.message, stack: error.stack });
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // Upload site logo
 router.post("/site-logo", requireAuth, upload.single("image"), async (req, res) => {
   const file = req.file;

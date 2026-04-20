@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSiteConfig } from "../config/siteConfig.jsx";
 import toast from "react-hot-toast";
 import StarBurstTarget from "../components/StarBurstTarget";
@@ -52,6 +52,7 @@ const Home = () => {
   const [newsletterName, setNewsletterName] = useState("");
   const [subscribing, setSubscribing] = useState(false);
   const [selectedNews, setSelectedNews] = useState(null);
+  const [carouselIndex, setCarouselIndex] = useState(0);
   const newsModal = useModal();
 
   useEffect(() => {
@@ -99,6 +100,22 @@ const Home = () => {
       setSubscribing(false);
     }
   };
+
+  const prideFestivalPhotos = homeContent?.prideFestivalPhotos ?? [];
+
+  const carouselPrev = useCallback(() => {
+    setCarouselIndex((i) => (i === 0 ? prideFestivalPhotos.length - 1 : i - 1));
+  }, [prideFestivalPhotos.length]);
+
+  const carouselNext = useCallback(() => {
+    setCarouselIndex((i) => (i === prideFestivalPhotos.length - 1 ? 0 : i + 1));
+  }, [prideFestivalPhotos.length]);
+
+  useEffect(() => {
+    if (prideFestivalPhotos.length < 2) return;
+    const id = setInterval(carouselNext, 4000);
+    return () => clearInterval(id);
+  }, [prideFestivalPhotos.length, carouselNext]);
 
   // Content with API-driven fallbacks
   const heroSubtitle =
@@ -185,12 +202,45 @@ const Home = () => {
                 <span className="stat-label" aria-hidden="true">Shows</span>
               </div>
             </div>
-            <div className="photo-carousel">
-              <div className="carousel-placeholder" role="status" aria-label="Photo gallery placeholder">
-                <span aria-hidden="true">📸</span>
-                <p>Photo Gallery Coming Soon</p>
+            {prideFestivalPhotos.length > 0 ? (
+              <section className="photo-carousel" aria-label="Festival photo carousel">
+                <div className="carousel-track">
+                  <img
+                    key={prideFestivalPhotos[carouselIndex]}
+                    src={prideFestivalPhotos[carouselIndex]}
+                    alt={`Pride Festival — ${carouselIndex + 1} of ${prideFestivalPhotos.length}`}
+                    className="carousel-image"
+                  />
+                  {prideFestivalPhotos.length > 1 && (
+                    <>
+                      <button className="carousel-btn carousel-btn-prev" onClick={carouselPrev} aria-label="Previous photo">&#8249;</button>
+                      <button className="carousel-btn carousel-btn-next" onClick={carouselNext} aria-label="Next photo">&#8250;</button>
+                    </>
+                  )}
+                </div>
+                {prideFestivalPhotos.length > 1 && (
+                  <div className="carousel-dots" role="tablist" aria-label="Photo navigation">
+                    {prideFestivalPhotos.map((url, i) => (
+                      <button
+                        key={url}
+                        className={`carousel-dot${i === carouselIndex ? " active" : ""}`}
+                        onClick={() => setCarouselIndex(i)}
+                        role="tab"
+                        aria-selected={i === carouselIndex}
+                        aria-label={`Go to photo ${i + 1}`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </section>
+            ) : (
+              <div className="photo-carousel">
+                <output className="carousel-placeholder" aria-label="Photo gallery placeholder">
+                  <span aria-hidden="true">📸</span>
+                  <p>Photo Gallery Coming Soon</p>
+                </output>
               </div>
-            </div>
+            )}
             <Link to="/events" className="btn btn-primary">
               See More Events
             </Link>
