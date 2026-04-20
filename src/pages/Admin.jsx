@@ -26,6 +26,7 @@ const TABS = [
 	"board",
 	"news",
 	"users",
+	"newsletter",
 	"audit",
 	"profile",
 	"settings",
@@ -85,7 +86,8 @@ function Admin() {
 							{tab === "board" && "Board Members"}
 							{tab === "settings" && "Settings"}
 							{tab === "profile" && "My Profile"}
-							{tab === "audit" && "Audit Log"}
+							{tab === "newsletter" && "Newsletter"}
+						{tab === "audit" && "Audit Log"}
 						</button>
 					))}
 				</nav>
@@ -98,7 +100,8 @@ function Admin() {
 					{activeTab === "board" && <BoardMembersSection />}
 					{activeTab === "settings" && <SettingsSection />}
 					{activeTab === "profile" && <ProfileSection />}
-					{activeTab === "audit" && <AuditLogSection />}
+					{activeTab === "newsletter" && isAdmin && <NewsletterSection />}
+				{activeTab === "audit" && <AuditLogSection />}
 				</section>
 			</div>
 		</div>
@@ -3053,8 +3056,27 @@ function BoardMembersSection() {
 	);
 }
 
-// Newsletter Section - Send newsletters and manage subscribers
+// Newsletter Section
 function NewsletterSection() {
+	const handleExportSubscribers = () => {
+		window.location.href = "/api/newsletter/subscribers/export";
+	};
+
+	return (
+		<div>
+			<h3>Newsletter Subscribers</h3>
+			<p style={{ color: "var(--color-text-light)", marginBottom: "var(--spacing-lg)" }}>
+				Download a CSV of all newsletter subscriber emails.
+			</p>
+			<button type="button" className="btn btn-primary" onClick={handleExportSubscribers}>
+				Export Emails to CSV
+			</button>
+		</div>
+	);
+}
+
+// Newsletter Section - old full implementation (unused)
+function _NewsletterSectionFull() {
 	const [subscribers, setSubscribers] = useState([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
@@ -3734,7 +3756,7 @@ function SettingsSection() {
 
 	const settingsTabs = [
 		{ id: "social", label: "Social Media" },
-		// { id: "newsletter", label: "Newsletter" }
+		{ id: "newsletter", label: "Newsletter" }
 	];
 
 	return (

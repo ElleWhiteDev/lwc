@@ -217,17 +217,16 @@ async function seedAdminUser() {
       email,
     ]);
 
-    const passwordHash = await bcrypt.hash(password, 10);
-
     if (existing.rows.length > 0) {
-      // Update existing admin user's password, name, and role
+      // Update name and role only — preserve any password set via the admin panel
       await pool.query(
-        "UPDATE users SET password_hash = $1, name = $2, role = $3 WHERE email = $4",
-        [passwordHash, name, "admin", email],
+        "UPDATE users SET name = $1, role = $2 WHERE email = $3",
+        [name, "admin", email],
       );
       logger.info(`Updated admin user`, { email });
     } else {
-      // Create new admin user
+      // Create new admin user with the configured password
+      const passwordHash = await bcrypt.hash(password, 10);
       await pool.query(
         "INSERT INTO users (email, name, password_hash, role) VALUES ($1, $2, $3, $4)",
         [email, name, passwordHash, "admin"],

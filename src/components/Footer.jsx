@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useSiteConfig } from "../config/siteConfig.jsx";
 import "./Footer.css";
 import LogoWordmark from "./LogoWordmark";
 
@@ -159,6 +160,7 @@ const ContactForm = () => {
 const Footer = () => {
   const { pathname } = useLocation();
   const { user } = useAuth();
+  const siteConfig = useSiteConfig();
 
   return (
     <footer className="footer" id="footer" role="contentinfo">
@@ -175,9 +177,13 @@ const Footer = () => {
         <div className="container">
           <div className="footer-grid">
             <div className="footer-info">
-	              <div className="footer-logo" aria-hidden="true">
-	                <LogoWordmark />
-	              </div>
+              <div className="footer-logo" aria-hidden="true">
+                {siteConfig.logoUrl ? (
+                  <img src={siteConfig.logoUrl} alt="" className="logo-image" />
+                ) : (
+                  <LogoWordmark />
+                )}
+              </div>
               <p className="footer-tagline">
                 Celebrating diversity, fostering community, and creating spaces
                 where everyone belongs.

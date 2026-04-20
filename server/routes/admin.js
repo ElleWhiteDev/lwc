@@ -51,7 +51,8 @@ router.get("/users", async (req, res) => {
 });
 
 router.post("/users", async (req, res) => {
-  const { name, email, role = "user" } = req.body ?? {};
+  const { name, role = "user" } = req.body ?? {};
+  const email = req.body?.email?.trim().toLowerCase();
 
   if (!name || !email) {
     return res
@@ -118,7 +119,8 @@ router.post("/users", async (req, res) => {
 
 router.put("/users/:id", async (req, res) => {
   const { id } = req.params;
-  const { name, email, password } = req.body ?? {};
+  const { name, password } = req.body ?? {};
+  const email = req.body?.email?.trim().toLowerCase();
 
   if (!name && !email && !password) {
     return res.status(400).json({ message: "Nothing to update" });
@@ -312,7 +314,8 @@ router.delete("/users/:id", async (req, res) => {
 
 router.put("/me", async (req, res) => {
   const userId = req.user.id;
-  const { name, email, password } = req.body ?? {};
+  const { name, password } = req.body ?? {};
+  const email = req.body?.email?.trim().toLowerCase();
 
   if (!name && !email && !password) {
     return res.status(400).json({ message: "Nothing to update" });
