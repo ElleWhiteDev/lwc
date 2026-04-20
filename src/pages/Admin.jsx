@@ -3753,15 +3753,161 @@ function _NewsletterSectionFull() {
 // Settings Section - Social Media Integration and other settings
 function SettingsSection() {
 	const [activeSettingsTab, setActiveSettingsTab] = useState("social");
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState("");
+	const [success, setSuccess] = useState("");
+
+	// Facebook credentials
+	const [facebookPageId, setFacebookPageId] = useState("");
+	const [facebookAccessToken, setFacebookAccessToken] = useState("");
+
+	// Instagram credentials
+	const [instagramUserId, setInstagramUserId] = useState("");
+	const [instagramAccessToken, setInstagramAccessToken] = useState("");
+
+	// X/Twitter credentials
+	const [xUsername, setXUsername] = useState("");
+	const [xBearerToken, setXBearerToken] = useState("");
 
 	const settingsTabs = [
 		{ id: "social", label: "Social Media" },
 		{ id: "newsletter", label: "Newsletter" }
 	];
 
+	// Load current settings
+	useEffect(() => {
+		async function loadSettings() {
+			try {
+				const response = await fetch("/api/content/siteConfig");
+				if (response.ok) {
+					const data = await response.json();
+					const content = data.data ?? {};
+
+					if (content.facebookPageId) setFacebookPageId(content.facebookPageId);
+					if (content.facebookAccessToken) setFacebookAccessToken(content.facebookAccessToken);
+					if (content.instagramUserId) setInstagramUserId(content.instagramUserId);
+					if (content.instagramAccessToken) setInstagramAccessToken(content.instagramAccessToken);
+					if (content.xUsername) setXUsername(content.xUsername);
+					if (content.xBearerToken) setXBearerToken(content.xBearerToken);
+				}
+			} catch (err) {
+				console.error("Error loading settings:", err);
+			}
+		}
+		loadSettings();
+	}, []);
+
+	const handleSaveFacebook = async (e) => {
+		e.preventDefault();
+		setLoading(true);
+		setError("");
+		setSuccess("");
+
+		try {
+			const response = await fetch("/api/content/siteConfig", {
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				credentials: "include",
+				body: JSON.stringify({ facebookPageId, facebookAccessToken }),
+			});
+
+			if (response.ok) {
+				setSuccess("Facebook settings saved successfully!");
+				setTimeout(() => setSuccess(""), 3000);
+			} else {
+				const data = await response.json();
+				setError(data.error || "Failed to save Facebook settings");
+			}
+		} catch (err) {
+			setError("An error occurred while saving");
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleSaveInstagram = async (e) => {
+		e.preventDefault();
+		setLoading(true);
+		setError("");
+		setSuccess("");
+
+		try {
+			const response = await fetch("/api/content/siteConfig", {
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				credentials: "include",
+				body: JSON.stringify({ instagramUserId, instagramAccessToken }),
+			});
+
+			if (response.ok) {
+				setSuccess("Instagram settings saved successfully!");
+				setTimeout(() => setSuccess(""), 3000);
+			} else {
+				const data = await response.json();
+				setError(data.error || "Failed to save Instagram settings");
+			}
+		} catch (err) {
+			setError("An error occurred while saving");
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleSaveX = async (e) => {
+		e.preventDefault();
+		setLoading(true);
+		setError("");
+		setSuccess("");
+
+		try {
+			const response = await fetch("/api/content/siteConfig", {
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				credentials: "include",
+				body: JSON.stringify({ xUsername, xBearerToken }),
+			});
+
+			if (response.ok) {
+				setSuccess("X (Twitter) settings saved successfully!");
+				setTimeout(() => setSuccess(""), 3000);
+			} else {
+				const data = await response.json();
+				setError(data.error || "Failed to save X settings");
+			}
+		} catch (err) {
+			setError("An error occurred while saving");
+		} finally {
+			setLoading(false);
+		}
+	};
+
 	return (
 		<div>
 			<h2>Settings</h2>
+
+			{error && (
+				<div style={{
+					padding: "var(--spacing-md)",
+					marginBottom: "var(--spacing-lg)",
+					background: "#fee",
+					color: "#c00",
+					borderRadius: "var(--radius-md)"
+				}}>
+					{error}
+				</div>
+			)}
+
+			{success && (
+				<div style={{
+					padding: "var(--spacing-md)",
+					marginBottom: "var(--spacing-lg)",
+					background: "#efe",
+					color: "#060",
+					borderRadius: "var(--radius-md)"
+				}}>
+					{success}
+				</div>
+			)}
 
 			{/* Settings Tabs */}
 			<nav style={{
@@ -3801,100 +3947,98 @@ function SettingsSection() {
 					</p>
 
 			{/* Facebook Integration */}
-			<h3
-				style={{
-					marginTop: "var(--spacing-xl)",
-					marginBottom: "var(--spacing-md)",
-				}}
-			>
-				Facebook Integration
-			</h3>
-			<div
-				style={{
-					padding: "var(--spacing-xl)",
-					background: "var(--color-background-alt)",
-					borderRadius: "var(--radius-md)",
-					marginBottom: "var(--spacing-xl)",
-				}}
-			>
-				<p style={{ marginBottom: "var(--spacing-md)" }}>
-					Connect your Facebook page to automatically pull posts into the News
-					section.
-				</p>
-				<p
+			<form onSubmit={handleSaveFacebook}>
+				<h3
 					style={{
-						fontSize: "0.9rem",
-						color: "var(--color-text-light)",
-						marginBottom: "var(--spacing-lg)",
+						marginTop: "var(--spacing-xl)",
+						marginBottom: "var(--spacing-md)",
 					}}
 				>
-					<strong>Coming Soon:</strong> This feature is currently under
-					development. You'll be able to connect your Facebook page and
-					automatically import posts.
+					Facebook News Feed
+				</h3>
+				<p style={{ color: "var(--medium-gray)", fontSize: "0.9rem", marginBottom: "var(--spacing-md)" }}>
+					Powers the news feed on the homepage. Get a Page Access Token from{" "}
+					<a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener noreferrer">
+						Meta Graph API Explorer
+					</a>{" "}
+					with the <code>pages_read_engagement</code> permission.
 				</p>
-
 				<label className="form-field">
 					<span>Facebook Page ID</span>
-					<input type="text" placeholder="Your Facebook Page ID" disabled />
+					<input
+						type="text"
+						value={facebookPageId}
+						onChange={(e) => setFacebookPageId(e.target.value)}
+						placeholder="e.g. 61576987598719"
+					/>
 				</label>
-
 				<label className="form-field">
-					<span>Access Token</span>
-					<input type="password" placeholder="Facebook Access Token" disabled />
+					<span>Facebook Page Access Token</span>
+					<input
+						type="password"
+						value={facebookAccessToken}
+						onChange={(e) => setFacebookAccessToken(e.target.value)}
+						placeholder="Paste your long-lived Page Access Token"
+						autoComplete="off"
+					/>
 				</label>
-
-				<button type="button" className="btn btn-primary" disabled>
-					Connect Facebook (Coming Soon)
+				<button
+					type="submit"
+					className="btn btn-primary"
+					disabled={loading}
+					style={{ marginTop: "var(--spacing-md)" }}
+				>
+					{loading ? "Saving..." : "Save Facebook Settings"}
 				</button>
-			</div>
+			</form>
 
 			{/* Instagram Integration */}
-			<h3
-				style={{
-					marginTop: "var(--spacing-xl)",
-					marginBottom: "var(--spacing-md)",
-				}}
-			>
-				Instagram Integration
-			</h3>
-			<div
-				style={{
-					padding: "var(--spacing-xl)",
-					background: "var(--color-background-alt)",
-					borderRadius: "var(--radius-md)",
-					marginBottom: "var(--spacing-xl)",
-				}}
-			>
-				<p style={{ marginBottom: "var(--spacing-md)" }}>
-					Connect your Instagram account to automatically pull posts into the News
-					section.
-				</p>
-				<p
+			<form onSubmit={handleSaveInstagram}>
+				<h3
 					style={{
-						fontSize: "0.9rem",
-						color: "var(--color-text-light)",
-						marginBottom: "var(--spacing-lg)",
+						marginTop: "var(--spacing-xl)",
+						marginBottom: "var(--spacing-md)",
 					}}
 				>
-					<strong>Coming Soon:</strong> This feature is currently under
-					development. You'll be able to connect your Instagram account and
-					automatically import posts.
+					Instagram News Feed
+				</h3>
+				<p style={{ color: "var(--medium-gray)", fontSize: "0.9rem", marginBottom: "var(--spacing-md)" }}>
+					Requires an Instagram Business or Creator account connected to your Facebook Page.
+					Use the same{" "}
+					<a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener noreferrer">
+						Graph API Explorer
+					</a>{" "}
+					token with <code>instagram_basic</code> permission. Your Instagram User ID is the numeric
+					ID from the Graph API, not your username.
 				</p>
-
 				<label className="form-field">
-					<span>Instagram Business Account ID</span>
-					<input type="text" placeholder="Your Instagram Business Account ID" disabled />
+					<span>Instagram User ID</span>
+					<input
+						type="text"
+						value={instagramUserId}
+						onChange={(e) => setInstagramUserId(e.target.value)}
+						placeholder="e.g. 17841400000000000"
+					/>
 				</label>
-
 				<label className="form-field">
-					<span>Access Token</span>
-					<input type="password" placeholder="Instagram Access Token" disabled />
+					<span>Instagram Access Token</span>
+					<input
+						type="password"
+						value={instagramAccessToken}
+						onChange={(e) => setInstagramAccessToken(e.target.value)}
+						placeholder="Paste your long-lived Page Access Token"
+						autoComplete="off"
+					/>
 				</label>
-
-				<button type="button" className="btn btn-primary" disabled>
-					Connect Instagram (Coming Soon)
+				<button
+					type="submit"
+					className="btn btn-primary"
+					disabled={loading}
+					style={{ marginTop: "var(--spacing-md)" }}
+				>
+					{loading ? "Saving..." : "Save Instagram Settings"}
 				</button>
-			</div>
+			</form>
 
 			{/* TikTok Integration */}
 			<h3
@@ -3945,67 +4089,51 @@ function SettingsSection() {
 			</div>
 
 			{/* Twitter/X Integration */}
-			<h3
-				style={{
-					marginTop: "var(--spacing-xl)",
-					marginBottom: "var(--spacing-md)",
-				}}
-			>
-				Twitter (X) Integration
-			</h3>
-			<div
-				style={{
-					padding: "var(--spacing-xl)",
-					background: "var(--color-background-alt)",
-					borderRadius: "var(--radius-md)",
-					marginBottom: "var(--spacing-xl)",
-				}}
-			>
-				<p style={{ marginBottom: "var(--spacing-md)" }}>
-					Connect your Twitter/X account to automatically pull tweets into the News
-					section.
-				</p>
-				<p
+			<form onSubmit={handleSaveX}>
+				<h3
 					style={{
-						fontSize: "0.9rem",
-						color: "var(--color-text-light)",
-						marginBottom: "var(--spacing-lg)",
+						marginTop: "var(--spacing-xl)",
+						marginBottom: "var(--spacing-md)",
 					}}
 				>
-					<strong>Coming Soon:</strong> This feature is currently under
-					development. You'll be able to connect your Twitter/X account and
-					automatically import tweets.
+					X (Twitter) News Feed
+				</h3>
+				<p style={{ color: "var(--medium-gray)", fontSize: "0.9rem", marginBottom: "var(--spacing-md)" }}>
+					Requires an{" "}
+					<a href="https://developer.x.com/en/portal/dashboard" target="_blank" rel="noopener noreferrer">
+						X Developer account
+					</a>
+					. Create an app and copy the Bearer Token from the Keys &amp; Tokens tab.
+					Works for public accounts with no user login required.
 				</p>
-
 				<label className="form-field">
-					<span>Twitter/X Username</span>
-					<input type="text" placeholder="@yourusername" disabled />
+					<span>X Username</span>
+					<input
+						type="text"
+						value={xUsername}
+						onChange={(e) => setXUsername(e.target.value)}
+						placeholder="e.g. lwcwinchester (without @)"
+					/>
 				</label>
-
 				<label className="form-field">
-					<span>API Key</span>
-					<input type="password" placeholder="Twitter API Key" disabled />
+					<span>X Bearer Token</span>
+					<input
+						type="password"
+						value={xBearerToken}
+						onChange={(e) => setXBearerToken(e.target.value)}
+						placeholder="Paste your Bearer Token"
+						autoComplete="off"
+					/>
 				</label>
-
-				<label className="form-field">
-					<span>API Secret</span>
-					<input type="password" placeholder="Twitter API Secret" disabled />
-				</label>
-
-				<label className="form-field">
-					<span>Access Token</span>
-					<input type="password" placeholder="Twitter Access Token" disabled />
-				</label>
-
-				<label className="form-field">
-					<span>Access Token Secret</span>
-					<input type="password" placeholder="Twitter Access Token Secret" disabled />
-				</label>
-
-				<button type="button" className="btn btn-primary" disabled>
-					Connect Twitter/X (Coming Soon)
+				<button
+					type="submit"
+					className="btn btn-primary"
+					disabled={loading}
+					style={{ marginTop: "var(--spacing-md)" }}
+				>
+					{loading ? "Saving..." : "Save X (Twitter) Settings"}
 				</button>
-			</div>
+			</form>
 		</div>
 	)}
 

@@ -18,6 +18,9 @@ import adminRoutes from "./routes/admin.js";
 import imagesRoutes from "./routes/images.js";
 import boardMembersRoutes from "./routes/boardMembers.js";
 import newsletterRoutes from "./routes/newsletter.js";
+import facebookRoutes from "./routes/facebook.js";
+import instagramRoutes from "./routes/instagram.js";
+import twitterRoutes from "./routes/twitter.js";
 
 const app = express();
 
@@ -60,6 +63,9 @@ app.use("/api/admin", adminRoutes);
 app.use("/api", imagesRoutes);
 app.use("/api", boardMembersRoutes);
 app.use("/api/newsletter", newsletterRoutes);
+app.use("/api/facebook", facebookRoutes);
+app.use("/api/instagram", instagramRoutes);
+app.use("/api/twitter", twitterRoutes);
 
 // Static file serving
 const distPath = path.resolve(__dirname, "..", "dist");

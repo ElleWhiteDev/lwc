@@ -1,49 +1,34 @@
 import { Link } from "react-router-dom";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSiteConfig } from "../config/siteConfig.jsx";
 import toast from "react-hot-toast";
 import StarBurstTarget from "../components/StarBurstTarget";
-import Modal from "../components/Modal";
-import { useModal } from "../hooks/useModal";
 import "./Home.css";
 import LWCHomeBackground from "../assets/images/LWCHomeBackground.svg";
 
-// Static news items — replace with API data when a news endpoint is added
-const NEWS_ITEMS = [
-  {
-    id: 1,
-    date: "November 2024",
-    title: "Winter Community Gathering Coming Soon!",
-    excerpt:
-      "Join us for our upcoming Winter Community Gathering! Stay tuned for details about this cozy celebration bringing our community together during the holiday season.",
-    fullContent:
-      "Join us for our upcoming Winter Community Gathering! Stay tuned for details about this cozy celebration bringing our community together during the holiday season.\n\nThis special event will feature warm beverages, community activities, and a chance to connect with fellow members. We're planning an evening of celebration, reflection, and togetherness as we close out the year.\n\nMore details including date, time, and location will be announced soon. Follow us on social media or check back here for updates!",
-    gradient: "rainbow-gradient",
-    link: "/events",
-  },
-  {
-    id: 2,
-    date: "October 2024",
-    title: "Volunteer Appreciation Night",
-    excerpt:
-      "We celebrated our amazing volunteers who make our mission possible every day.",
-    fullContent:
-      "We celebrated our amazing volunteers who make our mission possible every day.\n\nOur Volunteer Appreciation Night was a wonderful evening of gratitude, recognition, and community. We honored the dedicated individuals who give their time, energy, and passion to support our mission.\n\nFrom event planning to outreach, from administrative support to creative contributions, our volunteers are the heart of our organization. Thank you to everyone who attended and to all our volunteers for everything you do!",
-    gradient: "purple-gradient",
-    link: "/about",
-  },
-  {
-    id: 3,
-    date: "September 2024",
-    title: "New Partnership Announcement",
-    excerpt:
-      "We're excited to announce new partnerships with local businesses supporting our cause.",
-    fullContent:
-      "We're excited to announce new partnerships with local businesses supporting our cause.\n\nThese partnerships represent a growing commitment from our local business community to support LGBTQ+ inclusion and celebration in Winchester. Together, we're building a more welcoming and supportive environment for everyone.\n\nOur new partners include local restaurants, shops, and service providers who share our values and mission. We're grateful for their support and look forward to working together to create positive change in our community.",
-    gradient: "pastel-gradient",
-    link: "/about",
-  },
-];
+const GRADIENTS = ["rainbow-gradient", "purple-gradient", "pastel-gradient"];
+
+const PLATFORM_LABELS = { facebook: "Facebook", instagram: "Instagram", twitter: "X" };
+
+function formatDate(isoString) {
+  return new Date(isoString).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+function normalizeFbPost(p) {
+  return { id: `fb-${p.id}`, source: "facebook", text: p.message, image: p.full_picture || null, date: p.created_time, url: p.permalink_url };
+}
+
+function normalizeIgPost(p) {
+  return { id: `ig-${p.id}`, source: "instagram", text: p.caption, image: p.media_url || p.thumbnail_url || null, date: p.timestamp, url: p.permalink };
+}
+
+function normalizeXPost(p) {
+  return { id: `x-${p.id}`, source: "twitter", text: p.text, image: p.media_url || null, date: p.created_at, url: p.permalink_url };
+}
 
 const Home = () => {
   const siteConfig = useSiteConfig();
@@ -51,9 +36,30 @@ const Home = () => {
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [newsletterName, setNewsletterName] = useState("");
   const [subscribing, setSubscribing] = useState(false);
-  const [selectedNews, setSelectedNews] = useState(null);
+  const [newsPosts, setNewsPosts] = useState([]);
   const [carouselIndex, setCarouselIndex] = useState(0);
-  const newsModal = useModal();
+  const newsFeedRef = useRef(null);
+
+  useEffect(() => {
+    const endpoints = [
+      { url: "/api/facebook/posts", key: "posts", normalize: normalizeFbPost },
+      { url: "/api/instagram/posts", key: "posts", normalize: normalizeIgPost },
+      { url: "/api/twitter/posts", key: "posts", normalize: normalizeXPost },
+    ];
+    Promise.allSettled(
+      endpoints.map(({ url, key, normalize }) =>
+        fetch(url)
+          .then((r) => r.json())
+          .then((d) => (d[key] || []).map(normalize))
+      )
+    ).then((results) => {
+      const all = results
+        .filter((r) => r.status === "fulfilled")
+        .flatMap((r) => r.value)
+        .sort((a, b) => new Date(b.date) - new Date(a.date));
+      if (all.length) setNewsPosts(all);
+    });
+  }, []);
 
   useEffect(() => {
     fetch("/api/content/home")
@@ -64,17 +70,6 @@ const Home = () => {
       .then((data) => { if (data.data) setHomeContent(data.data); })
       .catch((err) => console.error("Error loading home content:", err));
   }, []);
-
-  const openNewsModal = (item) => {
-    setSelectedNews(item);
-    newsModal.open();
-  };
-
-  const closeNewsModal = () => {
-    newsModal.close();
-    // Clear selection after the close animation
-    setTimeout(() => setSelectedNews(null), 300);
-  };
 
   const handleNewsletterSubmit = async (e) => {
     e.preventDefault();
@@ -116,6 +111,12 @@ const Home = () => {
     const id = setInterval(carouselNext, 4000);
     return () => clearInterval(id);
   }, [prideFestivalPhotos.length, carouselNext]);
+
+  const scrollNews = (dir) => {
+    const el = newsFeedRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * 320, behavior: "smooth" });
+  };
 
   // Content with API-driven fallbacks
   const heroSubtitle =
@@ -271,34 +272,81 @@ const Home = () => {
         </div>
       </section>
 
-      {/* News */}
+      {/* News Feed */}
       <section className="news section" aria-labelledby="news-heading">
         <div className="container">
           <h2 id="news-heading" className="section-title">
             Latest <span>News</span>
           </h2>
-          <div className="news-grid">
-            {NEWS_ITEMS.map((item, index) => (
-              <article
-                key={item.id}
-                className={index === 0 ? "news-card featured" : "news-card"}
-                onClick={() => openNewsModal(item)}
-                onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openNewsModal(item); } }}
-                tabIndex={0}
-                role="button"
-                aria-label={`Read more about ${item.title}`}
-                style={{ cursor: "pointer" }}
+          {newsPosts.length > 0 ? (
+            <div className="news-feed-wrapper" aria-label="Social media news feed">
+              <button
+                className="news-feed-btn news-feed-btn-prev"
+                onClick={() => scrollNews(-1)}
+                aria-label="Scroll news left"
               >
-                <div className={`news-image ${item.gradient}`} aria-hidden="true"></div>
-                <div className="news-content">
-                  <time className="news-date" dateTime={item.date}>{item.date}</time>
-                  <h3>{item.title}</h3>
-                  <p>{item.excerpt}</p>
-                  <span className="news-link" aria-hidden="true">Read More →</span>
-                </div>
-              </article>
-            ))}
-          </div>
+                &#8249;
+              </button>
+              <ul className="news-feed" ref={newsFeedRef} role="list">
+                {newsPosts.map((post, i) => (
+                  <li key={post.id} className="news-feed-card" role="listitem">
+                    {post.image ? (
+                      <img
+                        src={post.image}
+                        alt=""
+                        className="news-feed-card-img"
+                        aria-hidden="true"
+                      />
+                    ) : (
+                      <div
+                        className={`news-feed-card-placeholder ${GRADIENTS[i % GRADIENTS.length]}`}
+                        aria-hidden="true"
+                      />
+                    )}
+                    <div className="news-feed-card-body">
+                      <div className="news-feed-card-meta">
+                        <span className="news-feed-source">{PLATFORM_LABELS[post.source]}</span>
+                        <time className="news-date" dateTime={post.date}>
+                          {formatDate(post.date)}
+                        </time>
+                      </div>
+                      <p className="news-feed-card-text">{post.text}</p>
+                      <a
+                        href={post.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="news-link"
+                        aria-label={`View this post on ${PLATFORM_LABELS[post.source]} (opens in new tab)`}
+                      >
+                        View on {PLATFORM_LABELS[post.source]} →
+                      </a>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <button
+                className="news-feed-btn news-feed-btn-next"
+                onClick={() => scrollNews(1)}
+                aria-label="Scroll news right"
+              >
+                &#8250;
+              </button>
+            </div>
+          ) : (
+            <div className="news-feed-empty">
+              <p>
+                Follow us on{" "}
+                <a
+                  href={siteConfig.facebookUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Facebook
+                </a>{" "}
+                for the latest updates.
+              </p>
+            </div>
+          )}
         </div>
       </section>
 
@@ -376,33 +424,6 @@ const Home = () => {
           </div>
         </div>
       </section>
-
-      {/* News Modal */}
-      <Modal
-        isOpen={newsModal.isOpen}
-        onClose={closeNewsModal}
-        labelId="news-modal-title"
-        maxWidth="700px"
-      >
-        {selectedNews && (
-          <div className="modal-body">
-            <time className="modal-date" dateTime={selectedNews.date}>
-              {selectedNews.date}
-            </time>
-            <h2 id="news-modal-title">{selectedNews.title}</h2>
-            <p className="modal-text">{selectedNews.fullContent}</p>
-            {selectedNews.link && (
-              <Link
-                to={selectedNews.link}
-                className="btn btn-rainbow"
-                onClick={closeNewsModal}
-              >
-                Learn More →
-              </Link>
-            )}
-          </div>
-        )}
-      </Modal>
     </div>
   );
 };

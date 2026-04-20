@@ -1,164 +1,10 @@
-import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useSiteConfig } from "../config/siteConfig.jsx";
 import "./Footer.css";
 import LogoWordmark from "./LogoWordmark";
 
-// Separate ContactForm component so it can be reset via key prop
-const ContactForm = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    message: "",
-  });
-  const [errors, setErrors] = useState({});
-  const [submitted, setSubmitted] = useState(false);
-
-  const validateEmail = (email) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: "" }));
-    }
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const newErrors = {};
-
-    if (!formData.name.trim()) newErrors.name = "Name is required";
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!validateEmail(formData.email)) {
-      newErrors.email = "Please enter a valid email";
-    }
-    if (!formData.message.trim()) newErrors.message = "Message is required";
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/auth/contact", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => null);
-        throw new Error(data?.message || "Failed to send message");
-      }
-
-      setSubmitted(true);
-      setFormData({ name: "", email: "", message: "" });
-    } catch (error) {
-      console.error("Error sending contact form:", error);
-      setErrors({ message: error.message || "Failed to send message. Please try again." });
-    }
-  };
-
-  if (submitted) {
-    return (
-      <output className="success-message" aria-live="polite">
-        <span className="success-icon" aria-hidden="true">
-          ✓
-        </span>
-        <p>Thank you! We&apos;ll be in touch soon.</p>
-      </output>
-    );
-  }
-
-  return (
-    <form
-      onSubmit={handleSubmit}
-      className="footer-form"
-      noValidate
-      aria-label="Contact form"
-    >
-      <div className="form-group">
-        <label htmlFor="contact-name" className="visually-hidden">
-          Your Name (required)
-        </label>
-        <input
-          type="text"
-          id="contact-name"
-          name="name"
-          placeholder="Your Name *"
-          value={formData.name}
-          onChange={handleChange}
-          className={errors.name ? "error" : ""}
-          aria-required="true"
-          aria-invalid={errors.name ? "true" : "false"}
-          aria-describedby={errors.name ? "name-error" : undefined}
-        />
-        {errors.name && (
-          <span id="name-error" className="error-text" role="alert">
-            {errors.name}
-          </span>
-        )}
-      </div>
-      <div className="form-group">
-        <label htmlFor="contact-email" className="visually-hidden">
-          Your Email (required)
-        </label>
-        <input
-          type="email"
-          id="contact-email"
-          name="email"
-          placeholder="Your Email *"
-          value={formData.email}
-          onChange={handleChange}
-          className={errors.email ? "error" : ""}
-          aria-required="true"
-          aria-invalid={errors.email ? "true" : "false"}
-          aria-describedby={errors.email ? "email-error" : undefined}
-        />
-        {errors.email && (
-          <span id="email-error" className="error-text" role="alert">
-            {errors.email}
-          </span>
-        )}
-      </div>
-      <div className="form-group">
-        <label htmlFor="contact-message" className="visually-hidden">
-          Your Message (required)
-        </label>
-        <textarea
-          id="contact-message"
-          name="message"
-          placeholder="Your Message *"
-          rows="3"
-          value={formData.message}
-          onChange={handleChange}
-          className={errors.message ? "error" : ""}
-          aria-required="true"
-          aria-invalid={errors.message ? "true" : "false"}
-          aria-describedby={errors.message ? "message-error" : undefined}
-        ></textarea>
-        {errors.message && (
-          <span id="message-error" className="error-text" role="alert">
-            {errors.message}
-          </span>
-        )}
-      </div>
-      <button type="submit" className="btn btn-primary">
-        Send Message
-      </button>
-    </form>
-  );
-};
-
 const Footer = () => {
-  const { pathname } = useLocation();
   const { user } = useAuth();
   const siteConfig = useSiteConfig();
 
@@ -192,7 +38,14 @@ const Footer = () => {
 
             <div className="footer-contact">
               <h3 id="contact-heading">Get In Touch</h3>
-              <ContactForm key={pathname} />
+              <p>Have a question or want to get involved? We&apos;d love to hear from you.</p>
+              <a
+                href="mailto:alifeworthcelebratinginc@gmail.com"
+                className="btn btn-primary"
+                aria-label="Send us an email"
+              >
+                Email Us
+              </a>
             </div>
           </div>
         </div>
