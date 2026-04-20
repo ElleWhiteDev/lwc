@@ -3617,7 +3617,7 @@ function SettingsSection() {
 
 	const settingsTabs = [
 		{ id: "social", label: "Social Media" },
-		{ id: "newsletter", label: "Newsletter" }
+		// { id: "newsletter", label: "Newsletter" }
 	];
 
 	return (
