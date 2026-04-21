@@ -44,7 +44,7 @@ const Footer = () => {
                 className="btn btn-primary"
                 aria-label="Send us an email"
               >
-                Email Us
+                alifeworthcelebratinginc@gmail.com
               </a>
             </div>
           </div>
