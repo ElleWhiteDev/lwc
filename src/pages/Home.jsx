@@ -434,7 +434,7 @@ const Home = () => {
               >
                 Donate Now
               </a>
-              <Link to="/events" className="btn btn-cta-secondary-dark">
+              <Link to="/resources" className="btn btn-cta-secondary-dark">
                 Get Involved
               </Link>
             </div>
