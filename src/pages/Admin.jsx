@@ -25,6 +25,7 @@ const TABS = [
 	"events",
 	"board",
 	"news",
+	"newsletter",
 	"users",
 	"audit",
 	"profile",
