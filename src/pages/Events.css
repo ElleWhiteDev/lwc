@@ -344,7 +344,8 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  margin-bottom: var(--spacing-sm);
+  margin-top: var(--spacing-xs);
+  margin-bottom: var(--spacing-md);
 }
 
 .add-to-calendar-btn:hover {

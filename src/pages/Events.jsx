@@ -203,9 +203,6 @@ const Events = () => {
                           </p>
                         )}
                       </div>
-                      {event.description && (
-                        <p className="upcoming-event-description">{event.description}</p>
-                      )}
                       {event.date && (
                         <button
                           className="add-to-calendar-btn"
@@ -214,6 +211,9 @@ const Events = () => {
                         >
                           📅 Add to Calendar
                         </button>
+                      )}
+                      {event.description && (
+                        <p className="upcoming-event-description">{event.description}</p>
                       )}
                       <span className="event-read-more" aria-hidden="true">Read more...</span>
                     </div>
