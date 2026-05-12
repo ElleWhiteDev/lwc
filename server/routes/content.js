@@ -79,6 +79,41 @@ router.put("/:slug", requireAuth, async (req, res) => {
       newData: saved.data,
     });
 
+    if (slug === "resources") {
+      const prevLinks = existing?.data?.links ?? [];
+      const newLinks = saved.data?.links ?? [];
+      const prevIds = new Set(prevLinks.map((l) => l.id));
+      const newIds = new Set(newLinks.map((l) => l.id));
+
+      const added = newLinks.filter((l) => !prevIds.has(l.id));
+      const removed = prevLinks.filter((l) => !newIds.has(l.id));
+
+      await Promise.all([
+        ...added.map((link) =>
+          logAudit({
+            userId: req.user.id,
+            action: "add_resource_link",
+            entityType: "site_content",
+            entityId: saved.id,
+            entitySlug: slug,
+            previousData: null,
+            newData: link,
+          })
+        ),
+        ...removed.map((link) =>
+          logAudit({
+            userId: req.user.id,
+            action: "remove_resource_link",
+            entityType: "site_content",
+            entityId: saved.id,
+            entitySlug: slug,
+            previousData: link,
+            newData: null,
+          })
+        ),
+      ]);
+    }
+
     logger.info(`Content ${existing ? 'updated' : 'created'}`, {
       userId: req.user.id,
       slug,

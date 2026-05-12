@@ -2619,6 +2619,18 @@ function ProfileSection() {
 	);
 }
 
+const ACTION_LABELS = {
+	create: "Created",
+	update: "Updated",
+	delete: "Deleted",
+	add_resource_link: "Added Resource Link",
+	remove_resource_link: "Removed Resource Link",
+};
+
+function formatAuditAction(action) {
+	return ACTION_LABELS[action] ?? action;
+}
+
 function AuditLogSection() {
 	const [logs, setLogs] = useState([]);
 	const [loading, setLoading] = useState(false);
@@ -2706,6 +2718,10 @@ function AuditLogSection() {
 								entityDisplay = `Board Member - ${log.previous_data.name}`;
 							} else if (log.entity_type === "board_member" && log.entity_id) {
 								entityDisplay = `Board Member #${log.entity_id}`;
+							} else if (log.action === "add_resource_link" && log.new_data?.label) {
+								entityDisplay = `Resource Link - ${log.new_data.label}`;
+							} else if (log.action === "remove_resource_link" && log.previous_data?.label) {
+								entityDisplay = `Resource Link - ${log.previous_data.label}`;
 							} else if (log.entity_slug) {
 								entityDisplay = `${log.entity_type} (${log.entity_slug})`;
 							} else if (log.entity_id) {
@@ -2723,7 +2739,7 @@ function AuditLogSection() {
 								<tr key={log.id}>
 									<td>{formattedDate}</td>
 									<td>{log.user_name || log.user_email || "(unknown)"}</td>
-									<td>{log.action}</td>
+									<td>{formatAuditAction(log.action)}</td>
 									<td>{entityDisplay}</td>
 								</tr>
 							);
@@ -3448,19 +3464,160 @@ function BoardMembersSection() {
 
 // Newsletter Section
 function NewsletterSection() {
-	const handleExportSubscribers = () => {
+	const [subscribers, setSubscribers] = useState([]);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState("");
+	const [togglingId, setTogglingId] = useState(null);
+	const [deletingId, setDeletingId] = useState(null);
+
+	const fetchSubscribers = async () => {
+		try {
+			const res = await fetch("/api/newsletter/subscribers");
+			if (!res.ok) throw new Error("Failed to fetch subscribers");
+			const data = await res.json();
+			setSubscribers(data);
+		} catch (err) {
+			setError(err.message);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	useEffect(() => {
+		fetchSubscribers();
+	}, []);
+
+	const handleToggleStatus = async (subscriber) => {
+		const newStatus = subscriber.status === "active" ? "unsubscribed" : "active";
+		setTogglingId(subscriber.id);
+		try {
+			const res = await fetch(`/api/newsletter/subscribers/${subscriber.id}`, {
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({
+					email: subscriber.email,
+					name: subscriber.name,
+					status: newStatus,
+				}),
+			});
+			if (!res.ok) throw new Error("Failed to update status");
+			const updated = await res.json();
+			setSubscribers((prev) =>
+				prev.map((s) => (s.id === subscriber.id ? updated : s))
+			);
+		} catch (err) {
+			setError(err.message);
+		} finally {
+			setTogglingId(null);
+		}
+	};
+
+	const handleDelete = async (id) => {
+		if (!window.confirm("Delete this subscriber? This cannot be undone.")) return;
+		setDeletingId(id);
+		try {
+			const res = await fetch(`/api/newsletter/subscribers/${id}`, {
+				method: "DELETE",
+			});
+			if (!res.ok && res.status !== 204) throw new Error("Failed to delete subscriber");
+			setSubscribers((prev) => prev.filter((s) => s.id !== id));
+		} catch (err) {
+			setError(err.message);
+		} finally {
+			setDeletingId(null);
+		}
+	};
+
+	const handleExport = () => {
 		window.location.href = "/api/newsletter/subscribers/export";
 	};
 
 	return (
 		<div>
-			<h3>Newsletter Subscribers</h3>
-			<p style={{ color: "var(--color-text-light)", marginBottom: "var(--spacing-lg)" }}>
-				Download a CSV of all newsletter subscriber emails.
-			</p>
-			<button type="button" className="btn btn-primary" onClick={handleExportSubscribers}>
-				Export Emails to CSV
-			</button>
+			<div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--spacing-lg)" }}>
+				<h3 style={{ margin: 0 }}>Newsletter Subscribers</h3>
+				<button type="button" className="btn btn-secondary" onClick={handleExport}>
+					Export CSV
+				</button>
+			</div>
+
+			{error && (
+				<div className="error-message" style={{ marginBottom: "var(--spacing-md)" }}>
+					{error}
+				</div>
+			)}
+
+			{loading ? (
+				<p>Loading subscribers...</p>
+			) : subscribers.length === 0 ? (
+				<p style={{ color: "var(--color-text-light)" }}>No subscribers yet.</p>
+			) : (
+				<table className="admin-table">
+					<thead>
+						<tr>
+							<th>Email</th>
+							<th>Name</th>
+							<th>Status</th>
+							<th>Subscribed</th>
+							<th>Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						{subscribers.map((sub) => (
+							<tr key={sub.id}>
+								<td>{sub.email}</td>
+								<td>{sub.name || <span style={{ color: "var(--color-text-light)" }}>—</span>}</td>
+								<td>
+									<button
+										type="button"
+										onClick={() => handleToggleStatus(sub)}
+										disabled={togglingId === sub.id}
+										style={{
+											display: "inline-flex",
+											alignItems: "center",
+											gap: "6px",
+											padding: "4px 12px",
+											borderRadius: "20px",
+											border: "none",
+											cursor: togglingId === sub.id ? "wait" : "pointer",
+											fontSize: "0.8rem",
+											fontWeight: "600",
+											background: sub.status === "active" ? "rgba(34,197,94,0.15)" : "rgba(156,163,175,0.15)",
+											color: sub.status === "active" ? "#16a34a" : "#6b7280",
+											transition: "all 0.2s",
+										}}
+									>
+										<span style={{
+											width: "8px",
+											height: "8px",
+											borderRadius: "50%",
+											background: sub.status === "active" ? "#16a34a" : "#9ca3af",
+											flexShrink: 0,
+										}} />
+										{togglingId === sub.id ? "Saving…" : sub.status === "active" ? "Active" : "Unsubscribed"}
+									</button>
+								</td>
+								<td style={{ fontSize: "0.875rem", color: "var(--color-text-light)" }}>
+									{sub.subscribed_at
+										? new Date(sub.subscribed_at).toLocaleDateString()
+										: "—"}
+								</td>
+								<td>
+									<button
+										type="button"
+										className="btn btn-danger"
+										onClick={() => handleDelete(sub.id)}
+										disabled={deletingId === sub.id}
+										style={{ fontSize: "0.8rem", padding: "4px 10px" }}
+									>
+										{deletingId === sub.id ? "Deleting…" : "Delete"}
+									</button>
+								</td>
+							</tr>
+						))}
+					</tbody>
+				</table>
+			)}
 		</div>
 	);
 }

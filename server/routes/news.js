@@ -1,6 +1,7 @@
 import express from "express";
 import { pool } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
+import { logAudit } from "../audit.js";
 import logger from "../utils/logger.js";
 
 const router = express.Router();
@@ -34,6 +35,17 @@ router.put("/admin/reorder", requireAuth, async (req, res) => {
         [postId, source ?? "unknown", displayOrder],
       );
     }
+
+    await logAudit({
+      userId: req.user.id,
+      action: "reorder",
+      entityType: "news_post",
+      entitySlug: "bulk",
+      previousData: null,
+      newData: { updates },
+    });
+
+    logger.info("News posts reordered", { userId: req.user.id, count: updates.length });
     return res.json({ message: "Reordered successfully" });
   } catch (err) {
     logger.error("Error reordering news posts", { error: err.message });
@@ -47,6 +59,12 @@ router.put("/admin/:postId", requireAuth, async (req, res) => {
   const { source, isPublished, displayOrder } = req.body ?? {};
 
   try {
+    const existing = await pool.query(
+      "SELECT * FROM news_post_overrides WHERE post_id = $1",
+      [postId],
+    );
+    const previous = existing.rows[0] ?? null;
+
     const result = await pool.query(
       `INSERT INTO news_post_overrides (post_id, source, is_published, display_order, updated_at)
        VALUES ($1, $2, $3, $4, NOW())
@@ -57,7 +75,23 @@ router.put("/admin/:postId", requireAuth, async (req, res) => {
        RETURNING *`,
       [postId, source ?? "unknown", isPublished ?? null, displayOrder ?? null],
     );
-    return res.json(result.rows[0]);
+    const saved = result.rows[0];
+
+    let action = "update";
+    if (isPublished === true) action = "publish";
+    else if (isPublished === false) action = "unpublish";
+
+    await logAudit({
+      userId: req.user.id,
+      action,
+      entityType: "news_post",
+      entitySlug: postId,
+      previousData: previous,
+      newData: saved,
+    });
+
+    logger.info("News post override updated", { userId: req.user.id, postId, action });
+    return res.json(saved);
   } catch (err) {
     logger.error("Error updating news override", { error: err.message, postId });
     return res.status(500).json({ message: "Internal server error" });
