@@ -21,6 +21,8 @@ import newsletterRoutes from "./routes/newsletter.js";
 import facebookRoutes from "./routes/facebook.js";
 import instagramRoutes from "./routes/instagram.js";
 import twitterRoutes from "./routes/twitter.js";
+import tiktokRoutes from "./routes/tiktok.js";
+import newsRoutes from "./routes/news.js";
 
 const app = express();
 
@@ -28,6 +30,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const isProduction = process.env.NODE_ENV === "production";
+
+// Trust Heroku's load balancer so req.protocol reflects https in production
+if (isProduction) {
+  app.set("trust proxy", 1);
+}
 
 // Security middleware
 if (isProduction) {
@@ -66,6 +73,8 @@ app.use("/api/newsletter", newsletterRoutes);
 app.use("/api/facebook", facebookRoutes);
 app.use("/api/instagram", instagramRoutes);
 app.use("/api/twitter", twitterRoutes);
+app.use("/api/tiktok", tiktokRoutes);
+app.use("/api/news", newsRoutes);
 
 // Static file serving
 const distPath = path.resolve(__dirname, "..", "dist");

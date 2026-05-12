@@ -1,0 +1,118 @@
+/* Resources Hero */
+.resources-hero {
+  padding: var(--spacing-3xl) 0;
+  text-align: center;
+  color: var(--white);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.resources-hero h1 {
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  margin-bottom: var(--spacing-md);
+  color: var(--white);
+}
+
+.resources-hero-subtitle {
+  font-size: 1.25rem;
+  opacity: 0.9;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+/* Intro paragraph */
+.resources-intro {
+  max-width: 680px;
+  margin: 0 auto var(--spacing-3xl);
+  text-align: center;
+}
+
+.resources-intro p {
+  font-size: 1.1rem;
+  color: var(--medium-gray);
+  line-height: 1.8;
+  margin: 0;
+}
+
+.resources-intro a {
+  color: var(--primary-purple);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.resources-intro a:hover {
+  opacity: 0.8;
+}
+
+/* Resource Cards Grid */
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--spacing-lg);
+}
+
+.resource-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-lg);
+  border-radius: var(--radius-lg, 12px);
+  border: 2px solid transparent;
+  background: var(--white);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.resource-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-purple);
+}
+
+.resource-icon {
+  font-size: 2.25rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.resource-card-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.resource-card-body h3 {
+  font-size: 1.1rem;
+  color: var(--primary-purple);
+  margin: 0 0 var(--spacing-xs);
+}
+
+.resource-card-body p {
+  font-size: 0.95rem;
+  color: var(--medium-gray);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.resource-arrow {
+  font-size: 1.25rem;
+  color: var(--primary-purple);
+  flex-shrink: 0;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.resource-card:hover .resource-arrow {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .resources-grid {
+    grid-template-columns: 1fr;
+  }
+}

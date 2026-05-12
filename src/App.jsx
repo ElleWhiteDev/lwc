@@ -7,6 +7,7 @@ import ComingSoon from "./pages/ComingSoon";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Events from "./pages/Events";
+import Resources from "./pages/Resources";
 import Login from "./pages/Login";
 import ForgotPassword from "./pages/ForgotPassword";
 import ResetPassword from "./pages/ResetPassword";
@@ -73,6 +74,7 @@ function App() {
                   <Route path="/preview" element={<Home />} />
                   <Route path="/about" element={<About />} />
                   <Route path="/events" element={<Events />} />
+                  <Route path="/resources" element={<Resources />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/forgot-password" element={<ForgotPassword />} />
                   <Route path="/reset-password" element={<ResetPassword />} />

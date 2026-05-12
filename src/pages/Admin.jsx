@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext.jsx";
 import {
@@ -26,7 +26,6 @@ const TABS = [
 	"board",
 	"news",
 	"users",
-	"newsletter",
 	"audit",
 	"profile",
 	"settings",
@@ -126,6 +125,7 @@ function ContentSection() {
 					>
 						<option value="home">Home</option>
 						<option value="about">About</option>
+						<option value="resources">Resources</option>
 						<option value="siteConfig">Site Config</option>
 					</select>
 				</label>
@@ -133,6 +133,7 @@ function ContentSection() {
 
 			{page === "home" && <HomeContentEditor />}
 			{page === "about" && <AboutContentEditor />}
+			{page === "resources" && <ResourcesContentEditor />}
 			{page === "siteConfig" && <SiteConfigEditor />}
 		</div>
 	);
@@ -683,6 +684,183 @@ function AboutContentEditor() {
 				style={{ marginTop: "var(--spacing-lg)" }}
 			>
 				Save About Page Content
+			</button>
+		</form>
+	);
+}
+
+// Resources Page Content Editor
+const DEFAULT_RESOURCES = [
+	{ id: "performers", label: "Performers Form", description: "Interested in performing at one of our events? Fill out our performers application.", icon: "🎤", href: "https://forms.gle/sq8nv3YSaFsK4Aux8" },
+	{ id: "vendors", label: "Vendors Form", description: "Bring your business or craft to our events by applying as a vendor.", icon: "🛍️", href: "https://forms.gle/58uqN3RJtcC73yqB9" },
+	{ id: "sponsors", label: "Sponsors Form", description: "Partner with us to support our mission and reach our community.", icon: "🤝", href: "https://forms.gle/H2wyCr7qZGMH4zaS7" },
+	{ id: "nonprofits", label: "Nonprofits Form", description: "Connect your nonprofit with our events and the people we serve.", icon: "💜", href: "https://forms.gle/ATdaNPf1YRemEXVv8" },
+	{ id: "volunteers", label: "Volunteers Form", description: "Give your time and energy to help make our events a success.", icon: "🌟", href: "https://forms.gle/bkAye1YupTupcFTy5" },
+	{ id: "packet", label: "Sponsor Packet", description: "Download our sponsor packet to learn about partnership opportunities and benefits.", icon: "📄", href: "https://canva.link/kcwx2d2dlec1dim" },
+];
+
+function ResourcesContentEditor() {
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState("");
+	const [heroSubtitle, setHeroSubtitle] = useState("Everything you need to get involved with A Life Worth Celebrating.");
+	const [introText, setIntroText] = useState("Whether you’re looking to perform, vend, volunteer, or partner with us, you’ll find all of our forms and resources right here. If you have any questions or need assistance, don’t hesitate to reach out to us at alifeworthcelebratinginc@gmail.com — we’d love to hear from you.");
+	const [links, setLinks] = useState(DEFAULT_RESOURCES);
+
+	useEffect(() => {
+		let isMounted = true;
+		setLoading(true);
+		fetch("/api/content/resources")
+			.then((res) => res.ok ? res.json() : Promise.reject())
+			.then((data) => {
+				if (!isMounted) return;
+				const content = data.data ?? {};
+				if (content.heroSubtitle) setHeroSubtitle(content.heroSubtitle);
+				if (content.introText) setIntroText(content.introText);
+				if (Array.isArray(content.links) && content.links.length > 0) setLinks(content.links);
+			})
+			.catch(() => { if (isMounted) setError("Failed to load content"); })
+			.finally(() => { if (isMounted) setLoading(false); });
+		return () => { isMounted = false; };
+	}, []);
+
+	const updateLink = (id, field, value) =>
+		setLinks((prev) => prev.map((l) => l.id === id ? { ...l, [field]: value } : l));
+
+	const addLink = () =>
+		setLinks((prev) => [...prev, { id: crypto.randomUUID(), label: "", description: "", icon: "", href: "" }]);
+
+	const removeLink = (id) =>
+		setLinks((prev) => prev.filter((l) => l.id !== id));
+
+	const handleSave = async (e) => {
+		e.preventDefault();
+		setError("");
+		try {
+			const res = await fetch("/api/content/resources", {
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				credentials: "include",
+				body: JSON.stringify({ data: { heroSubtitle, introText, links } }),
+			});
+			if (!res.ok) {
+				const data = await res.json().catch(() => null);
+				throw new Error(data?.message || "Failed to save content");
+			}
+			toast.success("Resources page saved!");
+		} catch (err) {
+			setError(err.message || "Failed to save content");
+			toast.error(err.message || "Failed to save content");
+		}
+	};
+
+	if (loading) return <p>Loading content...</p>;
+
+	return (
+		<form onSubmit={handleSave} className="admin-form">
+			{error && <p className="form-error">{error}</p>}
+
+			<h3 style={{ marginTop: "var(--spacing-xl)", marginBottom: "var(--spacing-md)" }}>
+				Hero Section
+			</h3>
+			<label className="form-field">
+				<span>Hero Subtitle</span>
+				<textarea
+					rows={2}
+					value={heroSubtitle}
+					onChange={(e) => setHeroSubtitle(e.target.value)}
+					placeholder="Everything you need to get involved..."
+				/>
+			</label>
+
+			<h3 style={{ marginTop: "var(--spacing-xl)", marginBottom: "var(--spacing-md)" }}>
+				Intro Paragraph
+			</h3>
+			<label className="form-field">
+				<span>Intro Text</span>
+				<textarea
+					rows={4}
+					value={introText}
+					onChange={(e) => setIntroText(e.target.value)}
+					placeholder="Whether you're looking to perform, vend, volunteer..."
+				/>
+			</label>
+
+			<h3 style={{ marginTop: "var(--spacing-xl)", marginBottom: "var(--spacing-md)" }}>
+				Resource Links
+			</h3>
+			<p className="admin-help-text">Add, edit, or remove links shown on the Resources page.</p>
+
+			<div style={{ display: "flex", flexDirection: "column", gap: "var(--spacing-lg)" }}>
+				{links.map((link, index) => (
+					<div key={link.id} style={{ border: "1px solid var(--light-gray, #e5e7eb)", borderRadius: "8px", padding: "var(--spacing-md)" }}>
+						<div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--spacing-sm)" }}>
+							<strong style={{ color: "var(--medium-gray)" }}>Link {index + 1}</strong>
+							<button
+								type="button"
+								className="btn btn-cta-secondary"
+								style={{ padding: "4px 12px", fontSize: "0.85rem" }}
+								onClick={() => removeLink(link.id)}
+							>
+								Remove
+							</button>
+						</div>
+						<div style={{ display: "grid", gridTemplateColumns: "80px 1fr", gap: "var(--spacing-sm)" }}>
+							<label className="form-field">
+								<span>Icon</span>
+								<input
+									type="text"
+									value={link.icon}
+									onChange={(e) => updateLink(link.id, "icon", e.target.value)}
+									placeholder="🎤"
+								/>
+							</label>
+							<label className="form-field">
+								<span>Label</span>
+								<input
+									type="text"
+									value={link.label}
+									onChange={(e) => updateLink(link.id, "label", e.target.value)}
+									placeholder="Performers Form"
+								/>
+							</label>
+						</div>
+						<label className="form-field">
+							<span>Description</span>
+							<input
+								type="text"
+								value={link.description}
+								onChange={(e) => updateLink(link.id, "description", e.target.value)}
+								placeholder="Short description of this link"
+							/>
+						</label>
+						<label className="form-field">
+							<span>URL</span>
+							<input
+								type="url"
+								value={link.href}
+								onChange={(e) => updateLink(link.id, "href", e.target.value)}
+								placeholder="https://"
+							/>
+						</label>
+					</div>
+				))}
+			</div>
+
+			<button
+				type="button"
+				className="btn btn-cta-secondary"
+				style={{ marginTop: "var(--spacing-md)" }}
+				onClick={addLink}
+			>
+				+ Add Link
+			</button>
+
+			<button
+				type="submit"
+				className="btn btn-primary"
+				style={{ marginTop: "var(--spacing-lg)", display: "block" }}
+			>
+				Save Resources Page
 			</button>
 		</form>
 	);
@@ -2564,51 +2742,201 @@ function SortableBoardMemberRow({ member, handleEditClick, handleDelete }) {
 	);
 }
 
-// News Section - Manage news posts (Facebook + Manual)
+const NEWS_PLATFORM_LABELS = { facebook: "Facebook", instagram: "Instagram", twitter: "X", tiktok: "TikTok" };
+
+function newsFormatDate(iso) {
+	return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function SortableNewsCard({ post, onTogglePublished }) {
+	const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: post.id });
+	const style = {
+		transform: CSS.Transform.toString(transform),
+		transition,
+		opacity: isDragging ? 0.5 : post.is_published ? 1 : 0.6,
+	};
+
+	return (
+		<div
+			ref={setNodeRef}
+			style={{
+				...style,
+				display: "flex",
+				alignItems: "flex-start",
+				gap: "var(--spacing-md)",
+				background: post.is_published ? "var(--color-background)" : "var(--color-background-alt)",
+				border: "1px solid var(--color-border)",
+				borderRadius: "var(--radius-md)",
+				padding: "var(--spacing-md)",
+				marginBottom: "var(--spacing-sm)",
+			}}
+			{...attributes}
+		>
+			<div
+				{...listeners}
+				style={{ cursor: "grab", userSelect: "none", fontSize: "20px", color: "var(--color-text-light)", paddingTop: "2px", flexShrink: 0 }}
+				aria-label="Drag to reorder"
+			>
+				⋮⋮
+			</div>
+			{post.image && (
+				<img
+					src={post.image}
+					alt=""
+					style={{ width: 64, height: 64, objectFit: "cover", borderRadius: "var(--radius-sm)", flexShrink: 0 }}
+				/>
+			)}
+			<div style={{ flex: 1, minWidth: 0 }}>
+				<div style={{ display: "flex", alignItems: "center", gap: "var(--spacing-sm)", marginBottom: "var(--spacing-xs)", flexWrap: "wrap" }}>
+					<span style={{ fontSize: "0.75rem", fontWeight: 600, padding: "2px 8px", borderRadius: "999px", background: "var(--color-primary)", color: "#fff", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+						{NEWS_PLATFORM_LABELS[post.source] ?? post.source}
+					</span>
+					<span style={{ fontSize: "0.8rem", color: "var(--color-text-light)" }}>
+						{newsFormatDate(post.date)}
+					</span>
+					{!post.is_published && (
+						<span style={{ fontSize: "0.75rem", color: "var(--color-text-light)", fontStyle: "italic" }}>Hidden</span>
+					)}
+				</div>
+				<p style={{ fontSize: "0.875rem", margin: "0 0 var(--spacing-xs)", overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" }}>
+					{post.text || "(no text)"}
+				</p>
+				{post.url && (
+					<a href={post.url} target="_blank" rel="noopener noreferrer" style={{ fontSize: "0.8rem", color: "var(--color-primary)" }}>
+						View original →
+					</a>
+				)}
+			</div>
+			<button
+				type="button"
+				className={post.is_published ? "btn btn-danger" : "btn btn-rainbow"}
+				style={{ fontSize: "0.8rem", padding: "4px 10px", whiteSpace: "nowrap", flexShrink: 0 }}
+				onClick={() => onTogglePublished(post.id, post.source, !post.is_published)}
+			>
+				{post.is_published ? "Hide" : "Show"}
+			</button>
+		</div>
+	);
+}
+
 function NewsSection() {
+	const [posts, setPosts] = useState([]);
+	const [loading, setLoading] = useState(false);
+	const [error, setError] = useState("");
+
+	const sensors = useSensors(
+		useSensor(PointerSensor),
+		useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+	);
+
+	const loadPosts = useCallback(async () => {
+		setLoading(true);
+		setError("");
+		try {
+			const endpoints = [
+				{ url: "/api/facebook/posts", key: "posts", normalize: (p) => ({ id: `fb-${p.id}`, source: "facebook", text: p.message, image: p.full_picture || null, date: p.created_time, url: p.permalink_url }) },
+				{ url: "/api/instagram/posts", key: "posts", normalize: (p) => ({ id: `ig-${p.id}`, source: "instagram", text: p.caption, image: p.media_url || p.thumbnail_url || null, date: p.timestamp, url: p.permalink }) },
+				{ url: "/api/twitter/posts", key: "posts", normalize: (p) => ({ id: `x-${p.id}`, source: "twitter", text: p.text, image: p.media_url || null, date: p.created_at, url: p.permalink_url }) },
+				{ url: "/api/tiktok/posts", key: "posts", normalize: (p) => ({ id: `tt-${p.id}`, source: "tiktok", text: p.video_description || p.title || "", image: p.cover_image_url || null, date: new Date(p.create_time * 1000).toISOString(), url: p.share_url }) },
+			];
+			const results = await Promise.allSettled([
+				...endpoints.map(({ url, key, normalize }) =>
+					fetch(url, { credentials: "include" }).then((r) => r.json()).then((d) => (d[key] || []).map(normalize))
+				),
+				fetch("/api/news/overrides").then((r) => r.json()).then((d) => d.overrides || []),
+			]);
+			const postResults = results.slice(0, endpoints.length);
+			const overridesResult = results[endpoints.length];
+			const overrides = overridesResult.status === "fulfilled" ? overridesResult.value : [];
+			const overrideMap = Object.fromEntries(overrides.map((o) => [o.post_id, o]));
+			const all = postResults
+				.filter((r) => r.status === "fulfilled")
+				.flatMap((r) => r.value)
+				.map((post) => ({
+					...post,
+					is_published: overrideMap[post.id]?.is_published ?? true,
+					display_order: overrideMap[post.id]?.display_order ?? null,
+				}))
+				.sort((a, b) => {
+					const aOrder = a.display_order ?? Infinity;
+					const bOrder = b.display_order ?? Infinity;
+					if (aOrder !== bOrder) return aOrder - bOrder;
+					return new Date(b.date) - new Date(a.date);
+				});
+			setPosts(all);
+		} catch {
+			setError("Failed to load news posts");
+		} finally {
+			setLoading(false);
+		}
+	}, []);
+
+	useEffect(() => { loadPosts(); }, [loadPosts]);
+
+	const handleDragEnd = async (event) => {
+		const { active, over } = event;
+		if (!over || active.id === over.id) return;
+		const oldIndex = posts.findIndex((p) => p.id === active.id);
+		const newIndex = posts.findIndex((p) => p.id === over.id);
+		if (oldIndex === -1 || newIndex === -1) return;
+		const newPosts = arrayMove(posts, oldIndex, newIndex).map((p, i) => ({ ...p, display_order: i }));
+		setPosts(newPosts);
+		try {
+			const res = await fetch("/api/news/admin/reorder", {
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				credentials: "include",
+				body: JSON.stringify({ updates: newPosts.map((p) => ({ postId: p.id, source: p.source, displayOrder: p.display_order })) }),
+			});
+			if (!res.ok) throw new Error("Failed to reorder");
+			toast.success("News reordered!");
+		} catch (err) {
+			toast.error(err.message || "Failed to reorder");
+			await loadPosts();
+		}
+	};
+
+	const handleTogglePublished = async (postId, source, newIsPublished) => {
+		setPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, is_published: newIsPublished } : p)));
+		try {
+			const res = await fetch(`/api/news/admin/${encodeURIComponent(postId)}`, {
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				credentials: "include",
+				body: JSON.stringify({ source, isPublished: newIsPublished }),
+			});
+			if (!res.ok) throw new Error("Failed to update");
+			toast.success(newIsPublished ? "Post shown" : "Post hidden");
+		} catch (err) {
+			setPosts((prev) => prev.map((p) => (p.id === postId ? { ...p, is_published: !newIsPublished } : p)));
+			toast.error(err.message || "Failed to update post");
+		}
+	};
+
 	return (
 		<div>
 			<h2>News Management</h2>
 			<p className="admin-help-text">
-				Manage news posts from Facebook and create custom news posts. Once
-				Facebook is connected, posts will appear here automatically. You can
-				reorder, hide, or delete posts.
+				Posts are pulled automatically from connected social platforms. Drag to reorder or hide posts you don&apos;t want shown on the home page. Connect platforms in the <strong>Settings</strong> tab.
 			</p>
-			<div
-				style={{
-					padding: "var(--spacing-xl)",
-					background: "var(--color-background-alt)",
-					borderRadius: "var(--radius-md)",
-					marginTop: "var(--spacing-lg)",
-				}}
-			>
-				<h3>News Management Coming Soon</h3>
-				<p>This section will allow you to:</p>
-				<ul
-					style={{
-						marginLeft: "var(--spacing-lg)",
-						marginTop: "var(--spacing-md)",
-					}}
-				>
-					<li>
-						View Facebook posts automatically pulled from your connected page
-					</li>
-					<li>Reorder news posts (drag-and-drop)</li>
-					<li>Hide or delete Facebook posts</li>
-					<li>Create custom news posts manually</li>
-					<li>Publish/unpublish news posts</li>
-				</ul>
-				<p
-					style={{
-						fontSize: "0.9rem",
-						color: "var(--color-text-light)",
-						marginTop: "var(--spacing-md)",
-					}}
-				>
-					Connect your Facebook page in the Settings tab to enable automatic
-					post importing.
-				</p>
-			</div>
+			{error && <p style={{ color: "var(--color-danger)" }}>{error}</p>}
+			{loading ? (
+				<p>Loading posts...</p>
+			) : posts.length === 0 ? (
+				<div style={{ padding: "var(--spacing-xl)", background: "var(--color-background-alt)", borderRadius: "var(--radius-md)", marginTop: "var(--spacing-lg)", textAlign: "center" }}>
+					<p>No posts found. Make sure your social accounts are connected in the <strong>Settings</strong> tab.</p>
+				</div>
+			) : (
+				<DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+					<SortableContext items={posts.map((p) => p.id)} strategy={verticalListSortingStrategy}>
+						<div style={{ marginTop: "var(--spacing-lg)" }}>
+							{posts.map((post) => (
+								<SortableNewsCard key={post.id} post={post} onTogglePublished={handleTogglePublished} />
+							))}
+						</div>
+					</SortableContext>
+				</DndContext>
+			)}
 		</div>
 	);
 }
@@ -3075,681 +3403,6 @@ function NewsletterSection() {
 	);
 }
 
-// Newsletter Section - old full implementation (unused)
-function _NewsletterSectionFull() {
-	const [subscribers, setSubscribers] = useState([]);
-	const [loading, setLoading] = useState(false);
-	const [error, setError] = useState("");
-
-	// Newsletter sending state
-	const [recipients, setRecipients] = useState("active");
-	const [sending, setSending] = useState(false);
-
-	// SendGrid campaign state
-	const [campaigns, setCampaigns] = useState([]);
-	const [selectedCampaign, setSelectedCampaign] = useState("");
-	const [loadingCampaigns, setLoadingCampaigns] = useState(false);
-	const [syncing, setSyncing] = useState(false);
-
-	// File upload state
-	const [uploadedFile, setUploadedFile] = useState(null);
-	const [uploadedHtml, setUploadedHtml] = useState("");
-	const [emailSubject, setEmailSubject] = useState("");
-
-	// Add subscriber modal state
-	const [showAddModal, setShowAddModal] = useState(false);
-	const [newEmail, setNewEmail] = useState("");
-	const [newName, setNewName] = useState("");
-
-	useEffect(() => {
-		refreshSubscribers();
-		loadDraftCampaigns();
-	}, []);
-
-	const refreshSubscribers = async () => {
-		setLoading(true);
-		setError("");
-		try {
-			const response = await fetch("/api/newsletter/subscribers", {
-				credentials: "include",
-			});
-
-			if (!response.ok) {
-				const text = await response.text();
-				console.error("Failed to fetch subscribers. Response:", text);
-				throw new Error("Failed to fetch subscribers");
-			}
-
-			const data = await response.json();
-			setSubscribers(data);
-		} catch (err) {
-			console.error("Error in refreshSubscribers:", err);
-			setError(err.message || "Failed to load subscribers");
-			toast.error(err.message || "Failed to load subscribers");
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	const loadDraftCampaigns = async () => {
-		setLoadingCampaigns(true);
-		try {
-			const response = await fetch("/api/newsletter/campaigns/drafts", {
-				credentials: "include",
-			});
-
-			if (!response.ok) {
-				throw new Error("Failed to fetch draft campaigns");
-			}
-
-			const data = await response.json();
-			setCampaigns(data);
-		} catch (err) {
-			console.error("Error loading campaigns:", err);
-			toast.error("Failed to load SendGrid campaigns");
-		} finally {
-			setLoadingCampaigns(false);
-		}
-	};
-
-	const handleSyncAllSubscribers = async () => {
-		if (!window.confirm("Sync all subscribers to SendGrid? This may take a moment.")) {
-			return;
-		}
-
-		setSyncing(true);
-		try {
-			const response = await fetch("/api/newsletter/subscribers/sync-all", {
-				method: "POST",
-				credentials: "include",
-			});
-
-			if (!response.ok) {
-				throw new Error("Failed to sync subscribers");
-			}
-
-			const data = await response.json();
-			toast.success(data.message);
-		} catch (err) {
-			toast.error(err.message || "Failed to sync subscribers");
-		} finally {
-			setSyncing(false);
-		}
-	};
-
-	const handleSendCampaign = async () => {
-		if (!selectedCampaign) {
-			toast.error("Please select a campaign");
-			return;
-		}
-
-		if (!window.confirm(`Send campaign to ${recipients === "all" ? "all" : "active"} subscribers?`)) {
-			return;
-		}
-
-		setSending(true);
-		try {
-			const response = await fetch(`/api/newsletter/campaigns/${selectedCampaign}/send`, {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				credentials: "include",
-				body: JSON.stringify({ recipients }),
-			});
-
-			if (!response.ok) {
-				const data = await response.json().catch(() => null);
-				throw new Error(data?.message || "Failed to send campaign");
-			}
-
-			const data = await response.json();
-			toast.success(data.message);
-		} catch (err) {
-			toast.error(err.message || "Failed to send campaign");
-		} finally {
-			setSending(false);
-		}
-	};
-
-	const handleFileUpload = (event) => {
-		const file = event.target.files[0];
-		if (!file) return;
-
-		if (!file.name.endsWith('.html') && !file.name.endsWith('.htm')) {
-			toast.error("Please upload an HTML file");
-			return;
-		}
-
-		const reader = new FileReader();
-		reader.onload = (e) => {
-			setUploadedHtml(e.target.result);
-			setUploadedFile(file);
-			toast.success(`File "${file.name}" loaded successfully`);
-		};
-		reader.onerror = () => {
-			toast.error("Failed to read file");
-		};
-		reader.readAsText(file);
-	};
-
-	const handleSendUploadedEmail = async () => {
-		if (!uploadedHtml) {
-			toast.error("Please upload an HTML file first");
-			return;
-		}
-
-		if (!emailSubject) {
-			toast.error("Please enter an email subject");
-			return;
-		}
-
-		if (!window.confirm(`Send email to ${recipients === "all" ? "all" : "active"} subscribers?`)) {
-			return;
-		}
-
-		setSending(true);
-		try {
-			const response = await fetch("/api/newsletter/send-html", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				credentials: "include",
-				body: JSON.stringify({
-					subject: emailSubject,
-					html: uploadedHtml,
-					recipients,
-				}),
-			});
-
-			if (!response.ok) {
-				const data = await response.json().catch(() => null);
-				throw new Error(data?.message || "Failed to send email");
-			}
-
-			const data = await response.json();
-			toast.success(`Email sent to ${data.recipientCount} subscribers!`);
-
-			// Clear form
-			setUploadedFile(null);
-			setUploadedHtml("");
-			setEmailSubject("");
-			setRecipients("active");
-		} catch (err) {
-			toast.error(err.message || "Failed to send email");
-		} finally {
-			setSending(false);
-		}
-	};
-
-	const handleAddSubscriber = async (event) => {
-		event.preventDefault();
-
-		if (!newEmail) {
-			toast.error("Email is required");
-			return;
-		}
-
-		setLoading(true);
-		setError("");
-
-		try {
-			console.log("Adding subscriber:", { email: newEmail, name: newName });
-
-			const response = await fetch("/api/newsletter/subscribers", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				credentials: "include",
-				body: JSON.stringify({ email: newEmail, name: newName }),
-			});
-
-			console.log("Response status:", response.status);
-			console.log("Response ok:", response.ok);
-
-			if (!response.ok) {
-				const contentType = response.headers.get("content-type");
-				console.log("Response content-type:", contentType);
-
-				if (contentType && contentType.includes("application/json")) {
-					const data = await response.json();
-					console.log("Error data:", data);
-					throw new Error(data?.message || "Failed to add subscriber");
-				} else {
-					const text = await response.text();
-					console.log("Error response (non-JSON):", text);
-					throw new Error("Server returned an error. Check console for details.");
-				}
-			}
-
-			const data = await response.json();
-			console.log("Success data:", data);
-
-			toast.success("Subscriber added successfully!");
-			setNewEmail("");
-			setNewName("");
-			setShowAddModal(false);
-			await refreshSubscribers();
-		} catch (err) {
-			console.error("Error adding subscriber:", err);
-			setError(err.message || "Failed to add subscriber");
-			toast.error(err.message || "Failed to add subscriber");
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	const handleDeleteSubscriber = async (id) => {
-		if (!window.confirm("Delete this subscriber?")) return;
-
-		try {
-			const response = await fetch(`/api/newsletter/subscribers/${id}`, {
-				method: "DELETE",
-				credentials: "include",
-			});
-
-			if (!response.ok && response.status !== 204) {
-				throw new Error("Failed to delete subscriber");
-			}
-
-			toast.success("Subscriber deleted successfully!");
-			await refreshSubscribers();
-		} catch (err) {
-			setError(err.message || "Failed to delete subscriber");
-			toast.error(err.message || "Failed to delete subscriber");
-		}
-	};
-
-	const handleExportSubscribers = () => {
-		window.open("/api/newsletter/subscribers/export", "_blank");
-	};
-
-	const activeSubscribers = subscribers.filter(s => s.status === "active").length;
-	const totalSubscribers = subscribers.length;
-
-	return (
-		<div>
-			<h3>Send Newsletter</h3>
-			<div style={{
-				marginBottom: "var(--spacing-lg)",
-				padding: "var(--spacing-md)",
-				background: "#f8f9fa",
-				borderRadius: "var(--radius-md)",
-				display: "flex",
-				gap: "var(--spacing-xl)",
-				justifyContent: "center"
-			}}>
-				<div style={{ textAlign: "center" }}>
-					<div style={{ fontSize: "2rem", fontWeight: "700", color: "var(--primary-purple)" }}>
-						{activeSubscribers}
-					</div>
-					<div style={{ fontSize: "0.875rem", color: "var(--color-text-light)" }}>
-						Active Subscribers
-					</div>
-				</div>
-				<div style={{ textAlign: "center" }}>
-					<div style={{ fontSize: "2rem", fontWeight: "700", color: "var(--color-text)" }}>
-						{totalSubscribers}
-					</div>
-					<div style={{ fontSize: "0.875rem", color: "var(--color-text-light)" }}>
-						Total Subscribers
-					</div>
-				</div>
-			</div>
-			{error && <p className="error-message">{error}</p>}
-
-			{/* SendGrid Campaign Picker */}
-			<div style={{
-				marginBottom: "var(--spacing-2xl)",
-				padding: "var(--spacing-xl)",
-				background: "linear-gradient(135deg, #f5f3ff 0%, #faf5ff 100%)",
-				borderRadius: "var(--radius-lg)",
-				border: "2px solid var(--primary-purple)"
-			}}>
-				<h4 style={{ marginBottom: "var(--spacing-md)", color: "var(--primary-purple)" }}>
-					📧 Send SendGrid Campaign
-				</h4>
-				<p style={{ marginBottom: "var(--spacing-lg)", color: "var(--color-text-light)", fontSize: "0.9rem" }}>
-					Create and design your newsletter in SendGrid, then select it here to send to your subscribers.
-				</p>
-
-				<div style={{ display: "flex", gap: "var(--spacing-md)", marginBottom: "var(--spacing-md)", flexWrap: "wrap" }}>
-					<button
-						type="button"
-						className="btn btn-secondary"
-						onClick={loadDraftCampaigns}
-						disabled={loadingCampaigns}
-					>
-						{loadingCampaigns ? "Loading..." : "🔄 Refresh Campaigns"}
-					</button>
-					<button
-						type="button"
-						className="btn btn-secondary"
-						onClick={handleSyncAllSubscribers}
-						disabled={syncing}
-					>
-						{syncing ? "Syncing..." : "⬆️ Sync Subscribers to SendGrid"}
-					</button>
-					<a
-						href="https://mc.sendgrid.com/single-sends"
-						target="_blank"
-						rel="noopener noreferrer"
-						className="btn btn-secondary"
-						style={{ textDecoration: "none" }}
-					>
-						🎨 Create Campaign in SendGrid
-					</a>
-				</div>
-
-				<div style={{ display: "flex", gap: "var(--spacing-md)", alignItems: "flex-end", flexWrap: "wrap" }}>
-					<label className="form-field" style={{ flex: 1, minWidth: "250px" }}>
-						<span>Select Campaign</span>
-						<select
-							value={selectedCampaign}
-							onChange={(e) => setSelectedCampaign(e.target.value)}
-							disabled={loadingCampaigns || campaigns.length === 0}
-							style={{
-								padding: "var(--spacing-md)",
-								fontSize: "1rem",
-								borderRadius: "var(--radius-md)",
-								border: "2px solid #e0e0e0",
-								background: "white",
-								cursor: "pointer",
-								transition: "all 0.2s ease",
-								outline: "none"
-							}}
-							onFocus={(e) => e.target.style.borderColor = "var(--primary-purple)"}
-							onBlur={(e) => e.target.style.borderColor = "#e0e0e0"}
-						>
-							<option value="">-- Select a draft campaign --</option>
-							{campaigns.map((campaign) => (
-								<option key={campaign.id} value={campaign.id}>
-									{campaign.name}
-								</option>
-							))}
-						</select>
-					</label>
-
-					<label className="form-field" style={{ flex: 1, minWidth: "200px" }}>
-						<span>Recipients</span>
-						<select
-							value={recipients}
-							onChange={(e) => setRecipients(e.target.value)}
-							style={{
-								padding: "var(--spacing-md)",
-								fontSize: "1rem",
-								borderRadius: "var(--radius-md)",
-								border: "2px solid #e0e0e0",
-								background: "white",
-								cursor: "pointer",
-								transition: "all 0.2s ease",
-								outline: "none"
-							}}
-							onFocus={(e) => e.target.style.borderColor = "var(--primary-purple)"}
-							onBlur={(e) => e.target.style.borderColor = "#e0e0e0"}
-						>
-							<option value="active">✓ Active Subscribers Only</option>
-							<option value="all">📧 All Subscribers</option>
-						</select>
-					</label>
-
-					<button
-						type="button"
-						className="btn btn-primary"
-						onClick={handleSendCampaign}
-						disabled={!selectedCampaign || sending}
-						style={{ minWidth: "150px" }}
-					>
-						{sending ? "Preparing..." : "📤 Prepare Campaign"}
-					</button>
-				</div>
-
-				{campaigns.length === 0 && !loadingCampaigns && (
-					<p style={{ marginTop: "var(--spacing-md)", color: "var(--color-text-light)", fontSize: "0.875rem", fontStyle: "italic" }}>
-						No draft campaigns found. Create one in SendGrid first.
-					</p>
-				)}
-			</div>
-
-			{/* Upload HTML File Section */}
-			<div style={{
-				marginBottom: "var(--spacing-2xl)",
-				padding: "var(--spacing-xl)",
-				background: "linear-gradient(135deg, #fff5f5 0%, #ffe5e5 100%)",
-				borderRadius: "var(--radius-lg)",
-				border: "2px solid #ff6b6b"
-			}}>
-				<h4 style={{ marginBottom: "var(--spacing-md)", color: "#d63031" }}>
-					📄 Upload & Send HTML Email
-				</h4>
-				<p style={{ marginBottom: "var(--spacing-lg)", color: "var(--color-text-light)", fontSize: "0.9rem" }}>
-					Upload a pre-designed HTML email file and send it directly to your subscribers.
-				</p>
-
-				<div className="admin-form">
-					<label className="form-field">
-						<span>Email Subject *</span>
-						<input
-							type="text"
-							placeholder="Enter email subject..."
-							value={emailSubject}
-							onChange={(e) => setEmailSubject(e.target.value)}
-						/>
-					</label>
-
-					<label className="form-field">
-						<span>Upload HTML File *</span>
-						<input
-							type="file"
-							accept=".html,.htm"
-							onChange={handleFileUpload}
-							style={{
-								padding: "var(--spacing-sm)",
-								border: "2px dashed #ddd",
-								borderRadius: "var(--radius-md)",
-								cursor: "pointer"
-							}}
-						/>
-						{uploadedFile && (
-							<p style={{ marginTop: "var(--spacing-sm)", color: "var(--primary-green)", fontSize: "0.875rem" }}>
-								✓ {uploadedFile.name} loaded ({(uploadedHtml.length / 1024).toFixed(1)} KB)
-							</p>
-						)}
-					</label>
-
-					<label className="form-field">
-						<span>Recipients</span>
-						<select
-							value={recipients}
-							onChange={(e) => setRecipients(e.target.value)}
-							style={{
-								padding: "var(--spacing-md)",
-								fontSize: "1rem",
-								borderRadius: "var(--radius-md)",
-								border: "2px solid #e0e0e0",
-								background: "white",
-								cursor: "pointer",
-								transition: "all 0.2s ease",
-								outline: "none"
-							}}
-							onFocus={(e) => e.target.style.borderColor = "#ff6b6b"}
-							onBlur={(e) => e.target.style.borderColor = "#e0e0e0"}
-						>
-							<option value="active">✓ Active Subscribers Only</option>
-							<option value="all">📧 All Subscribers</option>
-						</select>
-					</label>
-
-					<div style={{ display: "flex", gap: "var(--spacing-md)" }}>
-						<button
-							type="button"
-							className="btn btn-primary"
-							onClick={handleSendUploadedEmail}
-							disabled={!uploadedHtml || !emailSubject || sending}
-						>
-							{sending ? "Sending..." : "📧 Send Email"}
-						</button>
-						{uploadedHtml && (
-							<button
-								type="button"
-								className="btn btn-secondary"
-								onClick={() => {
-									setUploadedFile(null);
-									setUploadedHtml("");
-									setEmailSubject("");
-								}}
-							>
-								Clear
-							</button>
-						)}
-					</div>
-				</div>
-			</div>
-
-
-
-			<h3 style={{ marginTop: "var(--spacing-2xl)" }}>Subscriber List</h3>
-			<div style={{ marginBottom: "var(--spacing-md)" }}>
-				<button
-					type="button"
-					className="btn btn-primary"
-					style={{ marginRight: "var(--spacing-sm)" }}
-					onClick={() => setShowAddModal(true)}
-				>
-					Add Subscriber
-				</button>
-				<button
-					type="button"
-					className="btn btn-secondary"
-					onClick={handleExportSubscribers}
-					disabled={subscribers.length === 0}
-				>
-					Export List
-				</button>
-			</div>
-
-			{/* Add Subscriber Modal */}
-			{showAddModal && (
-				<div style={{
-					position: "fixed",
-					top: 0,
-					left: 0,
-					right: 0,
-					bottom: 0,
-					background: "rgba(0, 0, 0, 0.5)",
-					display: "flex",
-					alignItems: "center",
-					justifyContent: "center",
-					zIndex: 1000,
-					padding: "var(--spacing-lg)"
-				}}>
-					<div style={{
-						background: "white",
-						borderRadius: "var(--radius-md)",
-						padding: "var(--spacing-xl)",
-						maxWidth: "500px",
-						width: "100%"
-					}}>
-						<h3>Add Subscriber</h3>
-						<form onSubmit={handleAddSubscriber} className="admin-form" style={{ marginTop: "var(--spacing-lg)" }}>
-							<label className="form-field">
-								<span>Email *</span>
-								<input
-									type="email"
-									placeholder="subscriber@example.com"
-									value={newEmail}
-									onChange={(e) => setNewEmail(e.target.value)}
-									required
-								/>
-							</label>
-							<label className="form-field">
-								<span>Name (optional)</span>
-								<input
-									type="text"
-									placeholder="Subscriber name"
-									value={newName}
-									onChange={(e) => setNewName(e.target.value)}
-								/>
-							</label>
-							<div style={{ display: "flex", gap: "var(--spacing-md)", marginTop: "var(--spacing-lg)" }}>
-								<button
-									type="button"
-									className="btn btn-secondary"
-									onClick={() => {
-										setShowAddModal(false);
-										setNewEmail("");
-										setNewName("");
-									}}
-								>
-									Cancel
-								</button>
-								<button type="submit" className="btn btn-primary" disabled={loading}>
-									{loading ? "Adding..." : "Add Subscriber"}
-								</button>
-							</div>
-						</form>
-					</div>
-				</div>
-			)}
-
-			{loading && <p>Loading subscribers...</p>}
-
-			<table className="admin-table">
-				<thead>
-					<tr>
-						<th>Email</th>
-						<th>Name</th>
-						<th>Subscribed</th>
-						<th>Status</th>
-						<th>Actions</th>
-					</tr>
-				</thead>
-				<tbody>
-					{subscribers.length === 0 ? (
-						<tr>
-							<td colSpan="5" style={{ textAlign: "center", color: "var(--color-text-light)" }}>
-								No subscribers yet. Click "Add Subscriber" to get started!
-							</td>
-						</tr>
-					) : (
-						subscribers.map((subscriber) => (
-							<tr key={subscriber.id}>
-								<td>{subscriber.email}</td>
-								<td>{subscriber.name || "-"}</td>
-								<td>{new Date(subscriber.subscribed_at).toLocaleDateString()}</td>
-								<td>
-									<span style={{
-										padding: "4px 12px",
-										borderRadius: "12px",
-										fontSize: "0.875rem",
-										fontWeight: "500",
-										background: subscriber.status === "active" ? "rgba(34, 197, 94, 0.1)" : "rgba(239, 68, 68, 0.1)",
-										color: subscriber.status === "active" ? "#16a34a" : "#dc2626"
-									}}>
-										{subscriber.status}
-									</span>
-								</td>
-								<td>
-									<button
-										type="button"
-										onClick={() => handleDeleteSubscriber(subscriber.id)}
-										className="btn btn-danger"
-										style={{ fontSize: "0.875rem", padding: "0.5rem 1rem" }}
-									>
-										Delete
-									</button>
-								</td>
-							</tr>
-						))
-					)}
-				</tbody>
-			</table>
-		</div>
-	);
-}
-
 // Settings Section - Social Media Integration and other settings
 function SettingsSection() {
 	const [activeSettingsTab, setActiveSettingsTab] = useState("social");
@@ -3768,6 +3421,11 @@ function SettingsSection() {
 	// X/Twitter credentials
 	const [xUsername, setXUsername] = useState("");
 	const [xBearerToken, setXBearerToken] = useState("");
+
+	// TikTok credentials
+	const [tiktokClientKey, setTiktokClientKey] = useState("");
+	const [tiktokClientSecret, setTiktokClientSecret] = useState("");
+	const [tiktokConnected, setTiktokConnected] = useState(false);
 
 	const settingsTabs = [
 		{ id: "social", label: "Social Media" },
@@ -3789,6 +3447,9 @@ function SettingsSection() {
 					if (content.instagramAccessToken) setInstagramAccessToken(content.instagramAccessToken);
 					if (content.xUsername) setXUsername(content.xUsername);
 					if (content.xBearerToken) setXBearerToken(content.xBearerToken);
+					if (content.tiktokClientKey) setTiktokClientKey(content.tiktokClientKey);
+					if (content.tiktokClientSecret) setTiktokClientSecret(content.tiktokClientSecret);
+					if (content.tiktokAccessToken) setTiktokConnected(true);
 				}
 			} catch (err) {
 				console.error("Error loading settings:", err);
@@ -3808,7 +3469,7 @@ function SettingsSection() {
 				method: "PUT",
 				headers: { "Content-Type": "application/json" },
 				credentials: "include",
-				body: JSON.stringify({ facebookPageId, facebookAccessToken }),
+				body: JSON.stringify({ data: { facebookPageId, facebookAccessToken } }),
 			});
 
 			if (response.ok) {
@@ -3818,7 +3479,7 @@ function SettingsSection() {
 				const data = await response.json();
 				setError(data.error || "Failed to save Facebook settings");
 			}
-		} catch (err) {
+		} catch {
 			setError("An error occurred while saving");
 		} finally {
 			setLoading(false);
@@ -3836,7 +3497,7 @@ function SettingsSection() {
 				method: "PUT",
 				headers: { "Content-Type": "application/json" },
 				credentials: "include",
-				body: JSON.stringify({ instagramUserId, instagramAccessToken }),
+				body: JSON.stringify({ data: { instagramUserId, instagramAccessToken } }),
 			});
 
 			if (response.ok) {
@@ -3846,7 +3507,7 @@ function SettingsSection() {
 				const data = await response.json();
 				setError(data.error || "Failed to save Instagram settings");
 			}
-		} catch (err) {
+		} catch {
 			setError("An error occurred while saving");
 		} finally {
 			setLoading(false);
@@ -3864,7 +3525,7 @@ function SettingsSection() {
 				method: "PUT",
 				headers: { "Content-Type": "application/json" },
 				credentials: "include",
-				body: JSON.stringify({ xUsername, xBearerToken }),
+				body: JSON.stringify({ data: { xUsername, xBearerToken } }),
 			});
 
 			if (response.ok) {
@@ -3874,7 +3535,35 @@ function SettingsSection() {
 				const data = await response.json();
 				setError(data.error || "Failed to save X settings");
 			}
-		} catch (err) {
+		} catch {
+			setError("An error occurred while saving");
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const handleSaveTikTok = async (e) => {
+		e.preventDefault();
+		setLoading(true);
+		setError("");
+		setSuccess("");
+
+		try {
+			const response = await fetch("/api/content/siteConfig", {
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				credentials: "include",
+				body: JSON.stringify({ data: { tiktokClientKey, tiktokClientSecret } }),
+			});
+
+			if (response.ok) {
+				setSuccess("TikTok credentials saved! Click \"Connect TikTok Account\" to authorize.");
+				setTimeout(() => setSuccess(""), 5000);
+			} else {
+				const data = await response.json();
+				setError(data.error || "Failed to save TikTok credentials");
+			}
+		} catch {
 			setError("An error occurred while saving");
 		} finally {
 			setLoading(false);
@@ -4041,52 +3730,65 @@ function SettingsSection() {
 			</form>
 
 			{/* TikTok Integration */}
-			<h3
-				style={{
-					marginTop: "var(--spacing-xl)",
-					marginBottom: "var(--spacing-md)",
-				}}
-			>
-				TikTok Integration
-			</h3>
-			<div
-				style={{
-					padding: "var(--spacing-xl)",
-					background: "var(--color-background-alt)",
-					borderRadius: "var(--radius-md)",
-					marginBottom: "var(--spacing-xl)",
-				}}
-			>
-				<p style={{ marginBottom: "var(--spacing-md)" }}>
-					Connect your TikTok account to automatically pull videos into the News
-					section.
-				</p>
-				<p
+			<form onSubmit={handleSaveTikTok}>
+				<h3
 					style={{
-						fontSize: "0.9rem",
-						color: "var(--color-text-light)",
-						marginBottom: "var(--spacing-lg)",
+						marginTop: "var(--spacing-xl)",
+						marginBottom: "var(--spacing-md)",
 					}}
 				>
-					<strong>Coming Soon:</strong> This feature is currently under
-					development. You'll be able to connect your TikTok account and
-					automatically import videos.
+					TikTok News Feed
+				</h3>
+				<p style={{ color: "var(--medium-gray)", fontSize: "0.9rem", marginBottom: "var(--spacing-md)" }}>
+					Requires a TikTok Developer account. Create an app at{" "}
+					<a href="https://developers.tiktok.com/" target="_blank" rel="noopener noreferrer">
+						developers.tiktok.com
+					</a>
+					{" "}with the <code>video.list</code> scope. Save your credentials below,
+					then click Connect to authorize your TikTok account.
 				</p>
-
 				<label className="form-field">
-					<span>TikTok Username</span>
-					<input type="text" placeholder="@yourusername" disabled />
+					<span>TikTok Client Key</span>
+					<input
+						type="text"
+						value={tiktokClientKey}
+						onChange={(e) => setTiktokClientKey(e.target.value)}
+						placeholder="Your TikTok app Client Key"
+					/>
 				</label>
-
 				<label className="form-field">
-					<span>Access Token</span>
-					<input type="password" placeholder="TikTok Access Token" disabled />
+					<span>TikTok Client Secret</span>
+					<input
+						type="password"
+						value={tiktokClientSecret}
+						onChange={(e) => setTiktokClientSecret(e.target.value)}
+						placeholder="Your TikTok app Client Secret"
+						autoComplete="off"
+					/>
 				</label>
-
-				<button type="button" className="btn btn-primary" disabled>
-					Connect TikTok (Coming Soon)
-				</button>
-			</div>
+				<div style={{ display: "flex", gap: "var(--spacing-md)", alignItems: "center", marginTop: "var(--spacing-md)", flexWrap: "wrap" }}>
+					<button
+						type="submit"
+						className="btn btn-secondary"
+						disabled={loading}
+					>
+						{loading ? "Saving..." : "Save TikTok Credentials"}
+					</button>
+					<button
+						type="button"
+						className="btn btn-primary"
+						disabled={!tiktokClientKey || !tiktokClientSecret}
+						onClick={() => { window.location.href = "/api/tiktok/auth"; }}
+					>
+						{tiktokConnected ? "Reconnect TikTok Account" : "Connect TikTok Account"}
+					</button>
+					{tiktokConnected && (
+						<span style={{ color: "#060", fontSize: "0.9rem", fontWeight: 500 }}>
+							&#10003; Connected
+						</span>
+					)}
+				</div>
+			</form>
 
 			{/* Twitter/X Integration */}
 			<form onSubmit={handleSaveX}>

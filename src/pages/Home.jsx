@@ -8,7 +8,7 @@ import LWCHomeBackground from "../assets/images/LWCHomeBackground.svg";
 
 const GRADIENTS = ["rainbow-gradient", "purple-gradient", "pastel-gradient"];
 
-const PLATFORM_LABELS = { facebook: "Facebook", instagram: "Instagram", twitter: "X" };
+const PLATFORM_LABELS = { facebook: "Facebook", instagram: "Instagram", twitter: "X", tiktok: "TikTok" };
 
 function formatDate(isoString) {
   return new Date(isoString).toLocaleDateString("en-US", {
@@ -30,6 +30,10 @@ function normalizeXPost(p) {
   return { id: `x-${p.id}`, source: "twitter", text: p.text, image: p.media_url || null, date: p.created_at, url: p.permalink_url };
 }
 
+function normalizeTiktokPost(p) {
+  return { id: `tt-${p.id}`, source: "tiktok", text: p.video_description || p.title || "", image: p.cover_image_url || null, date: new Date(p.create_time * 1000).toISOString(), url: p.share_url };
+}
+
 const Home = () => {
   const siteConfig = useSiteConfig();
   const [homeContent, setHomeContent] = useState(null);
@@ -45,18 +49,31 @@ const Home = () => {
       { url: "/api/facebook/posts", key: "posts", normalize: normalizeFbPost },
       { url: "/api/instagram/posts", key: "posts", normalize: normalizeIgPost },
       { url: "/api/twitter/posts", key: "posts", normalize: normalizeXPost },
+      { url: "/api/tiktok/posts", key: "posts", normalize: normalizeTiktokPost },
     ];
-    Promise.allSettled(
-      endpoints.map(({ url, key, normalize }) =>
+    Promise.allSettled([
+      ...endpoints.map(({ url, key, normalize }) =>
         fetch(url)
           .then((r) => r.json())
           .then((d) => (d[key] || []).map(normalize))
-      )
-    ).then((results) => {
-      const all = results
+      ),
+      fetch("/api/news/overrides").then((r) => r.json()).then((d) => d.overrides || []),
+    ]).then((results) => {
+      const postResults = results.slice(0, endpoints.length);
+      const overridesResult = results[endpoints.length];
+      const overrides = overridesResult.status === "fulfilled" ? overridesResult.value : [];
+      const overrideMap = Object.fromEntries(overrides.map((o) => [o.post_id, o]));
+
+      const all = postResults
         .filter((r) => r.status === "fulfilled")
         .flatMap((r) => r.value)
-        .sort((a, b) => new Date(b.date) - new Date(a.date));
+        .filter((post) => overrideMap[post.id]?.is_published !== false)
+        .sort((a, b) => {
+          const aOrder = overrideMap[a.id]?.display_order ?? Infinity;
+          const bOrder = overrideMap[b.id]?.display_order ?? Infinity;
+          if (aOrder !== bOrder) return aOrder - bOrder;
+          return new Date(b.date) - new Date(a.date);
+        });
       if (all.length) setNewsPosts(all);
     });
   }, []);

@@ -98,6 +98,15 @@ const Header = () => {
                 Events
               </NavLink>
             </li>
+            <li>
+              <NavLink
+                to="/resources"
+                onClick={closeMenu}
+                className={({ isActive }) => (isActive ? "active" : "")}
+              >
+                Resources
+              </NavLink>
+            </li>
           </ul>
         </nav>
 

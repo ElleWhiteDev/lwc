@@ -50,11 +50,11 @@ router.put("/:slug", requireAuth, async (req, res) => {
       const updateResult = await pool.query(
         `
           UPDATE site_content
-          SET data = $1, updated_at = NOW()
+          SET data = COALESCE(data, '{}'::jsonb) || $1::jsonb, updated_at = NOW()
           WHERE id = $2
           RETURNING id, slug, data, updated_at
         `,
-        [data, existing.id],
+        [JSON.stringify(data), existing.id],
       );
       saved = updateResult.rows[0];
     } else {

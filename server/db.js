@@ -186,6 +186,16 @@ async function initDb() {
     CREATE UNIQUE INDEX IF NOT EXISTS idx_newsletter_subscribers_email ON newsletter_subscribers(email);
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS news_post_overrides (
+      post_id TEXT PRIMARY KEY,
+      source TEXT NOT NULL DEFAULT 'unknown',
+      is_published BOOLEAN NOT NULL DEFAULT TRUE,
+      display_order INTEGER,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+  `);
+
     logger.info('Database schema initialized successfully');
 
     await seedAdminUser();
