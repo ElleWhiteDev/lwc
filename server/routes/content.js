@@ -4,6 +4,27 @@ import { requireAuth } from "../middleware/auth.js";
 import { logAudit } from "../audit.js";
 import logger from "../utils/logger.js";
 
+const CREDENTIAL_FIELDS = new Set([
+  "facebookPageId", "facebookAccessToken",
+  "instagramUserId", "instagramAccessToken",
+  "xUsername", "xBearerToken",
+  "tiktokClientKey", "tiktokClientSecret",
+]);
+
+const SENSITIVE_FIELDS = new Set([
+  "facebookAccessToken", "instagramAccessToken", "xBearerToken",
+  "tiktokClientSecret", "tiktokAccessToken", "tiktokRefreshToken", "tiktokOAuthState",
+]);
+
+function redactSiteConfig(data) {
+  if (!data || typeof data !== "object") return data;
+  const out = { ...data };
+  for (const field of SENSITIVE_FIELDS) {
+    if (out[field]) out[field] = "[REDACTED]";
+  }
+  return out;
+}
+
 const router = express.Router();
 
 router.get("/:slug", async (req, res) => {
@@ -69,14 +90,26 @@ router.put("/:slug", requireAuth, async (req, res) => {
       saved = insertResult.rows[0];
     }
 
+    const isCredentialUpdate =
+      slug === "siteConfig" && Object.keys(data).some((k) => CREDENTIAL_FIELDS.has(k));
+    let auditAction;
+    if (isCredentialUpdate) {
+      auditAction = "update_social_credentials";
+    } else {
+      auditAction = existing ? "update" : "create";
+    }
+
+    const auditPrev = slug === "siteConfig" ? redactSiteConfig(existing?.data ?? null) : (existing?.data ?? null);
+    const auditNew = slug === "siteConfig" ? redactSiteConfig(saved.data) : saved.data;
+
     await logAudit({
       userId: req.user.id,
-      action: existing ? "update" : "create",
+      action: auditAction,
       entityType: "site_content",
       entityId: saved.id,
       entitySlug: slug,
-      previousData: existing?.data ?? null,
-      newData: saved.data,
+      previousData: auditPrev,
+      newData: auditNew,
     });
 
     if (slug === "resources") {

@@ -1,7 +1,8 @@
 import express from "express";
-import crypto from "crypto";
+import crypto from "node:crypto";
 import { pool } from "../db.js";
 import { requireAuth } from "../middleware/auth.js";
+import { logAudit } from "../audit.js";
 import logger from "../utils/logger.js";
 
 const router = express.Router();
@@ -12,6 +13,7 @@ let cache = { posts: null, fetchedAt: 0 };
 const TIKTOK_AUTH_URL = "https://www.tiktok.com/v2/auth/authorize/";
 const TIKTOK_TOKEN_URL = "https://open.tiktokapis.com/v2/oauth/token/";
 const TIKTOK_VIDEO_URL = "https://open.tiktokapis.com/v2/video/list/";
+const VIDEO_FIELDS = "id,title,video_description,create_time,share_url,cover_image_url";
 
 async function getConfig() {
   const result = await pool.query(
@@ -28,6 +30,18 @@ async function patchConfig(patch) {
      WHERE slug = 'siteConfig'`,
     [JSON.stringify(patch)],
   );
+}
+
+async function fetchVideos(token) {
+  const r = await fetch(`${TIKTOK_VIDEO_URL}?fields=${VIDEO_FIELDS}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json; charset=UTF-8",
+    },
+    body: JSON.stringify({ max_count: 20 }),
+  });
+  return r.json();
 }
 
 async function refreshAccessToken(clientKey, clientSecret, refreshToken) {
@@ -63,7 +77,8 @@ router.get("/auth", requireAuth, async (req, res) => {
     }
 
     const state = crypto.randomBytes(16).toString("hex");
-    await patchConfig({ tiktokOAuthState: state });
+    // Store state and initiating user so the callback can log the audit entry
+    await patchConfig({ tiktokOAuthState: state, tiktokOAuthUserId: req.user.id });
 
     const redirectUri = `${req.protocol}://${req.get("host")}/api/tiktok/callback`;
 
@@ -126,6 +141,15 @@ router.get("/callback", async (req, res) => {
       tiktokAccessToken: tokenData.data.access_token,
       tiktokRefreshToken: tokenData.data.refresh_token,
       tiktokOAuthState: null,
+      tiktokOAuthUserId: null,
+    });
+
+    await logAudit({
+      userId: config.tiktokOAuthUserId ?? null,
+      action: "tiktok_account_connected",
+      entityType: "site_content",
+      entitySlug: "siteConfig",
+      newData: { connectedAt: new Date().toISOString() },
     });
 
     cache = { posts: null, fetchedAt: 0 };
@@ -151,21 +175,6 @@ router.get("/posts", async (req, res) => {
 
   if (!config.tiktokAccessToken) {
     return res.json({ posts: [] });
-  }
-
-  async function fetchVideos(token) {
-    const r = await fetch(
-      `${TIKTOK_VIDEO_URL}?fields=id,title,video_description,create_time,share_url,cover_image_url`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json; charset=UTF-8",
-        },
-        body: JSON.stringify({ max_count: 20 }),
-      },
-    );
-    return r.json();
   }
 
   try {

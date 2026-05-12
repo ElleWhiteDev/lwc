@@ -2625,6 +2625,8 @@ const ACTION_LABELS = {
 	delete: "Deleted",
 	add_resource_link: "Added Resource Link",
 	remove_resource_link: "Removed Resource Link",
+	update_social_credentials: "Updated Social Media Credentials",
+	tiktok_account_connected: "Connected TikTok Account",
 };
 
 function formatAuditAction(action) {

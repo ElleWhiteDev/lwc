@@ -19,6 +19,72 @@ function formatDate(dateString) {
     : date.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
 }
 
+/** Returns a Google Maps search URL for a given address. */
+function googleMapsUrl(location) {
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
+}
+
+/** Generates and downloads an .ics calendar invite for an event. */
+function downloadICS(event) {
+  if (!event.date) return;
+  const pad = (n) => String(n).padStart(2, "0");
+
+  const dateMatch = event.date.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  const base = dateMatch
+    ? new Date(parseInt(dateMatch[1]), parseInt(dateMatch[2]) - 1, parseInt(dateMatch[3]))
+    : new Date(event.date);
+  if (isNaN(base.getTime())) return;
+
+  let dtstart, dtend;
+  const timeMatch = event.time?.match(/(\d+):(\d+)\s*(AM|PM)?/i);
+  if (timeMatch) {
+    let h = parseInt(timeMatch[1]);
+    const min = parseInt(timeMatch[2]);
+    const period = timeMatch[3]?.toUpperCase();
+    if (period === "PM" && h !== 12) h += 12;
+    if (period === "AM" && h === 12) h = 0;
+    const start = new Date(base);
+    start.setHours(h, min, 0, 0);
+    const end = new Date(start.getTime() + 60 * 60 * 1000);
+    const fmt = (d) =>
+      `${d.getFullYear()}${pad(d.getMonth() + 1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+    dtstart = fmt(start);
+    dtend = fmt(end);
+  } else {
+    dtstart = `${base.getFullYear()}${pad(base.getMonth() + 1)}${pad(base.getDate())}`;
+    const next = new Date(base.getTime() + 86400000);
+    dtend = `${next.getFullYear()}${pad(next.getMonth() + 1)}${pad(next.getDate())}`;
+  }
+
+  const isAllDay = dtstart.length === 8;
+  const esc = (s) => s.replace(/\\/g, "\\\\").replace(/,/g, "\\,").replace(/;/g, "\\;");
+  const lines = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//LWC Events//EN",
+    "BEGIN:VEVENT",
+    isAllDay ? `DTSTART;VALUE=DATE:${dtstart}` : `DTSTART:${dtstart}`,
+    isAllDay ? `DTEND;VALUE=DATE:${dtend}` : `DTEND:${dtend}`,
+    `SUMMARY:${esc(event.title || "Event")}`,
+    event.description ? `DESCRIPTION:${esc(event.description).replace(/\n/g, "\\n")}` : null,
+    event.location ? `LOCATION:${esc(event.location)}` : null,
+    "END:VEVENT",
+    "END:VCALENDAR",
+  ]
+    .filter(Boolean)
+    .join("\r\n");
+
+  const blob = new Blob([lines], { type: "text/calendar;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${(event.title || "event").replace(/[^a-z0-9]/gi, "_")}.ics`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 /** Shared click/keyboard props for interactive event cards. */
 function cardProps(event, onOpen) {
   return {
@@ -123,13 +189,31 @@ const Events = () => {
                         )}
                         {event.location && (
                           <p className="upcoming-event-location">
-                            <span className="detail-icon" role="img" aria-label="Location">📍</span>{" "}
-                            {event.location}
+                            <a
+                              href={googleMapsUrl(event.location)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="event-location-link"
+                              onClick={(e) => e.stopPropagation()}
+                              aria-label={`View ${event.location} on Google Maps`}
+                            >
+                              <span className="detail-icon" role="img" aria-label="Location">📍</span>{" "}
+                              {event.location}
+                            </a>
                           </p>
                         )}
                       </div>
                       {event.description && (
                         <p className="upcoming-event-description">{event.description}</p>
+                      )}
+                      {event.date && (
+                        <button
+                          className="add-to-calendar-btn"
+                          onClick={(e) => { e.stopPropagation(); downloadICS(event); }}
+                          aria-label={`Add ${event.title} to calendar`}
+                        >
+                          📅 Add to Calendar
+                        </button>
                       )}
                       <span className="event-read-more" aria-hidden="true">Read more...</span>
                     </div>
@@ -249,8 +333,27 @@ const Events = () => {
                 )}
                 {selectedEvent.location && (
                   <p className="event-detail-row">
-                    <span role="img" aria-label="Location">📍</span>
-                    <strong>Location:</strong> {selectedEvent.location}
+                    <a
+                      href={googleMapsUrl(selectedEvent.location)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="event-location-link"
+                      aria-label={`View ${selectedEvent.location} on Google Maps (opens in new tab)`}
+                    >
+                      <span role="img" aria-label="Location">📍</span>
+                      <strong>Location:</strong> {selectedEvent.location}
+                    </a>
+                  </p>
+                )}
+                {selectedEvent.date && (
+                  <p className="event-detail-row">
+                    <button
+                      className="add-to-calendar-btn"
+                      onClick={() => downloadICS(selectedEvent)}
+                      aria-label="Download calendar invite"
+                    >
+                      📅 Add to Calendar
+                    </button>
                   </p>
                 )}
               </div>
