@@ -203,15 +203,6 @@ const Events = () => {
                           </p>
                         )}
                       </div>
-                      {event.date && (
-                        <button
-                          className="add-to-calendar-btn"
-                          onClick={(e) => { e.stopPropagation(); downloadICS(event); }}
-                          aria-label={`Add ${event.title} to calendar`}
-                        >
-                          📅 Add to Calendar
-                        </button>
-                      )}
                       {event.description && (
                         <p className="upcoming-event-description">{event.description}</p>
                       )}
