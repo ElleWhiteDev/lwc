@@ -3,7 +3,6 @@ import { Toaster } from "react-hot-toast";
 import Header from "./components/Header";
 import Footer from "./components/Footer";
 import ScrollToTop from "./components/ScrollToTop";
-import ComingSoon from "./pages/ComingSoon";
 import Home from "./pages/Home";
 import About from "./pages/About";
 import Events from "./pages/Events";
@@ -56,44 +55,33 @@ function App() {
           },
         }}
       />
-      <Routes>
-        {/* Coming Soon landing page - no header/footer */}
-        <Route path="/" element={<ComingSoon />} />
-
-        {/* Preview and all other routes - with header/footer */}
-        <Route
-          path="/*"
-          element={
-            <div className="app">
-              <a href="#main-content" className="skip-link">
-                Skip to main content
-              </a>
-              <Header />
-              <main id="main-content">
-                <Routes>
-                  <Route path="/preview" element={<Home />} />
-                  <Route path="/about" element={<About />} />
-                  <Route path="/events" element={<Events />} />
-                  <Route path="/resources" element={<Resources />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/forgot-password" element={<ForgotPassword />} />
-                  <Route path="/reset-password" element={<ResetPassword />} />
-                  <Route path="/unsubscribe" element={<Unsubscribe />} />
-                  <Route
-                    path="/admin"
-                    element={
-                      <RequireAuth>
-                        <Admin />
-                      </RequireAuth>
-                    }
-                  />
-                </Routes>
-              </main>
-              <Footer />
-            </div>
-          }
-        />
-      </Routes>
+      <div className="app">
+        <a href="#main-content" className="skip-link">
+          Skip to main content
+        </a>
+        <Header />
+        <main id="main-content">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/events" element={<Events />} />
+            <Route path="/resources" element={<Resources />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/unsubscribe" element={<Unsubscribe />} />
+            <Route
+              path="/admin"
+              element={
+                <RequireAuth>
+                  <Admin />
+                </RequireAuth>
+              }
+            />
+          </Routes>
+        </main>
+        <Footer />
+      </div>
     </Router>
   );
 }
