@@ -689,22 +689,90 @@ function AboutContentEditor() {
 	);
 }
 
-// Resources Page Content Editor
-const DEFAULT_RESOURCES = [
-	{ id: "performers", label: "Performers Form", description: "Interested in performing at one of our events? Fill out our performers application.", icon: "🎤", href: "https://forms.gle/sq8nv3YSaFsK4Aux8" },
-	{ id: "vendors", label: "Vendors Form", description: "Bring your business or craft to our events by applying as a vendor.", icon: "🛍️", href: "https://forms.gle/58uqN3RJtcC73yqB9" },
-	{ id: "sponsors", label: "Sponsors Form", description: "Partner with us to support our mission and reach our community.", icon: "🤝", href: "https://forms.gle/H2wyCr7qZGMH4zaS7" },
-	{ id: "nonprofits", label: "Nonprofits Form", description: "Connect your nonprofit with our events and the people we serve.", icon: "💜", href: "https://forms.gle/ATdaNPf1YRemEXVv8" },
-	{ id: "volunteers", label: "Volunteers Form", description: "Give your time and energy to help make our events a success.", icon: "🌟", href: "https://forms.gle/bkAye1YupTupcFTy5" },
-	{ id: "packet", label: "Sponsor Packet", description: "Download our sponsor packet to learn about partnership opportunities and benefits.", icon: "📄", href: "https://canva.link/kcwx2d2dlec1dim" },
+const ICON_LIBRARY = [
+	{ emoji: "🎤", label: "Microphone – Performers" },
+	{ emoji: "🎭", label: "Theater – Arts & Performance" },
+	{ emoji: "🎵", label: "Music Note" },
+	{ emoji: "🎶", label: "Music Notes" },
+	{ emoji: "🎪", label: "Circus Tent – Events" },
+	{ emoji: "🎉", label: "Party – Celebration" },
+	{ emoji: "🛍️", label: "Shopping Bag – Vendors" },
+	{ emoji: "🏪", label: "Store – Vendors" },
+	{ emoji: "🤝", label: "Handshake – Sponsors" },
+	{ emoji: "💰", label: "Money Bag – Funding" },
+	{ emoji: "🏆", label: "Trophy – Awards" },
+	{ emoji: "💜", label: "Purple Heart – Nonprofits" },
+	{ emoji: "❤️", label: "Heart – Love" },
+	{ emoji: "🌈", label: "Rainbow – Pride" },
+	{ emoji: "✨", label: "Sparkles" },
+	{ emoji: "🌟", label: "Star – Volunteers" },
+	{ emoji: "⭐", label: "Star" },
+	{ emoji: "🤲", label: "Open Hands – Giving" },
+	{ emoji: "👥", label: "People – Community" },
+	{ emoji: "🌻", label: "Sunflower – Community" },
+	{ emoji: "📄", label: "Document – Packet" },
+	{ emoji: "📋", label: "Clipboard – Forms" },
+	{ emoji: "📝", label: "Memo – Forms" },
+	{ emoji: "📎", label: "Paperclip – Attachments" },
+	{ emoji: "🗺️", label: "Map" },
+	{ emoji: "📍", label: "Pin – Location" },
+	{ emoji: "📢", label: "Megaphone – Announcements" },
+	{ emoji: "📧", label: "Email" },
+	{ emoji: "💌", label: "Love Letter – Contact" },
+	{ emoji: "🔗", label: "Link" },
+	{ emoji: "📱", label: "Phone – Social / Mobile" },
+	{ emoji: "📸", label: "Camera – Photos / Media" },
 ];
 
+function IconPicker({ value, onChange }) {
+	return (
+		<div className="form-field">
+			<span>Icon</span>
+			<div style={{
+				display: "grid",
+				gridTemplateColumns: "repeat(auto-fill, minmax(44px, 1fr))",
+				gap: "6px",
+				marginTop: "6px",
+			}}>
+				{ICON_LIBRARY.map(({ emoji, label }) => (
+					<button
+						key={emoji}
+						type="button"
+						title={label}
+						aria-label={label}
+						aria-pressed={value === emoji}
+						onClick={() => onChange(emoji)}
+						style={{
+							fontSize: "1.5rem",
+							lineHeight: 1,
+							padding: "6px",
+							border: value === emoji ? "2px solid var(--primary-purple)" : "2px solid transparent",
+							borderRadius: "8px",
+							background: value === emoji ? "rgba(139, 92, 246, 0.1)" : "var(--light-gray, #f3f4f6)",
+							cursor: "pointer",
+							transition: "border-color 0.15s, background 0.15s",
+						}}
+					>
+						{emoji}
+					</button>
+				))}
+			</div>
+			{value && (
+				<p style={{ marginTop: "6px", fontSize: "0.85rem", color: "var(--medium-gray)" }}>
+					Selected: <span style={{ fontSize: "1.2rem" }}>{value}</span>
+				</p>
+			)}
+		</div>
+	);
+}
+
+// Resources Page Content Editor
 function ResourcesContentEditor() {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
 	const [heroSubtitle, setHeroSubtitle] = useState("Everything you need to get involved with A Life Worth Celebrating.");
 	const [introText, setIntroText] = useState("Whether you’re looking to perform, vend, volunteer, or partner with us, you’ll find all of our forms and resources right here. If you have any questions or need assistance, don’t hesitate to reach out to us at alifeworthcelebratinginc@gmail.com — we’d love to hear from you.");
-	const [links, setLinks] = useState(DEFAULT_RESOURCES);
+	const [links, setLinks] = useState([]);
 
 	useEffect(() => {
 		let isMounted = true;
@@ -716,7 +784,7 @@ function ResourcesContentEditor() {
 				const content = data.data ?? {};
 				if (content.heroSubtitle) setHeroSubtitle(content.heroSubtitle);
 				if (content.introText) setIntroText(content.introText);
-				if (Array.isArray(content.links) && content.links.length > 0) setLinks(content.links);
+				if (Array.isArray(content.links)) setLinks(content.links);
 			})
 			.catch(() => { if (isMounted) setError("Failed to load content"); })
 			.finally(() => { if (isMounted) setLoading(false); });
@@ -804,26 +872,19 @@ function ResourcesContentEditor() {
 								Remove
 							</button>
 						</div>
-						<div style={{ display: "grid", gridTemplateColumns: "80px 1fr", gap: "var(--spacing-sm)" }}>
-							<label className="form-field">
-								<span>Icon</span>
-								<input
-									type="text"
-									value={link.icon}
-									onChange={(e) => updateLink(link.id, "icon", e.target.value)}
-									placeholder="🎤"
-								/>
-							</label>
-							<label className="form-field">
-								<span>Label</span>
-								<input
-									type="text"
-									value={link.label}
-									onChange={(e) => updateLink(link.id, "label", e.target.value)}
-									placeholder="Performers Form"
-								/>
-							</label>
-						</div>
+						<label className="form-field">
+							<span>Label</span>
+							<input
+								type="text"
+								value={link.label}
+								onChange={(e) => updateLink(link.id, "label", e.target.value)}
+								placeholder="Performers Form"
+							/>
+						</label>
+						<IconPicker
+							value={link.icon}
+							onChange={(emoji) => updateLink(link.id, "icon", emoji)}
+						/>
 						<label className="form-field">
 							<span>Description</span>
 							<input
