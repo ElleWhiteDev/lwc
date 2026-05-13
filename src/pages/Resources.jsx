@@ -3,7 +3,7 @@ import "./Resources.css";
 import LWCHomeBackground from "../assets/images/LWCHomeBackground.svg";
 
 const DEFAULT_HERO_SUBTITLE = "Everything you need to get involved with A Life Worth Celebrating.";
-const DEFAULT_INTRO = "Whether you're looking to perform, vend, volunteer, or partner with us, you'll find all of our forms and resources right here. If you have any questions or need assistance, don't hesitate to reach out to us at alifeworthcelebratinginc@gmail.com — we'd love to hear from you.";
+const DEFAULT_INTRO = "Whether you're looking to perform, vend, volunteer, or partner with us, you'll find all of our forms and resources right here. If you have any questions or need assistance, don't hesitate to reach out to us at info@alwcwin.org — we'd love to hear from you.";
 
 const Resources = () => {
   const [heroSubtitle, setHeroSubtitle] = useState(DEFAULT_HERO_SUBTITLE);

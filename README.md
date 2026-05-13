@@ -456,7 +456,7 @@ If you'd like to support A Life Worth Celebrating:
 
 For questions or inquiries:
 
-- Email: alifeworthcelebratinginc@gmail.com
+- Email: info@alwcwin.org
 - Facebook: [A Life Worth Celebrating](https://www.facebook.com/profile.php?id=61576987598719)
 
 ---

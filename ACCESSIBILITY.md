@@ -408,7 +408,7 @@ All images include proper accessibility features:
 ## Contact
 
 For accessibility concerns or questions, please contact:
-- Email: alifeworthcelebratinginc@gmail.com
+- Email: info@alwcwin.org
 
 ## Commitment
 

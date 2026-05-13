@@ -772,7 +772,7 @@ function ResourcesContentEditor() {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState("");
 	const [heroSubtitle, setHeroSubtitle] = useState("Everything you need to get involved with A Life Worth Celebrating.");
-	const [introText, setIntroText] = useState("Whether you’re looking to perform, vend, volunteer, or partner with us, you’ll find all of our forms and resources right here. If you have any questions or need assistance, don’t hesitate to reach out to us at alifeworthcelebratinginc@gmail.com — we’d love to hear from you.");
+	const [introText, setIntroText] = useState("Whether you’re looking to perform, vend, volunteer, or partner with us, you’ll find all of our forms and resources right here. If you have any questions or need assistance, don’t hesitate to reach out to us at info@alwcwin.org — we’d love to hear from you.");
 	const [links, setLinks] = useState([]);
 
 	useEffect(() => {
@@ -942,7 +942,7 @@ function SiteConfigEditor() {
 	);
 	const [orgName, setOrgName] = useState("A Life Worth Celebrating, Inc.");
 	const [contactEmail, setContactEmail] = useState(
-		"alifeworthcelebratinginc@gmail.com",
+		"info@alwcwin.org",
 	);
 
 	// Logo

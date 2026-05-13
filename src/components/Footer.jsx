@@ -40,11 +40,11 @@ const Footer = () => {
               <h3 id="contact-heading">Get In Touch</h3>
               <p>Have a question or want to get involved? We&apos;d love to hear from you.</p>
               <a
-                href="mailto:alifeworthcelebratinginc@gmail.com"
+                href="mailto:info@alwcwin.org"
                 className="btn btn-primary"
                 aria-label="Send us an email"
               >
-                alifeworthcelebratinginc@gmail.com
+                info@alwcwin.org
               </a>
             </div>
           </div>

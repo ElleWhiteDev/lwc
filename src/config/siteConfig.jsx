@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useEffect } from "react";
 const DEFAULT_CONFIG = {
   siteName: "A Life Worth Celebrating, Inc.",
   siteTagline: "Creating inclusive spaces for everyone",
-  contactEmail: "alifeworthcelebratinginc@gmail.com",
+  contactEmail: "info@alwcwin.org",
   facebookUrl: "https://www.facebook.com/profile.php?id=61576987598719",
   instagramUrl: "",
   xUrl: "",
