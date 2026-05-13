@@ -25,7 +25,6 @@ const TABS = [
 	"events",
 	"board",
 	"news",
-	"newsletter",
 	"users",
 	"audit",
 	"profile",
@@ -86,7 +85,6 @@ function Admin() {
 							{tab === "board" && "Board Members"}
 							{tab === "settings" && "Settings"}
 							{tab === "profile" && "My Profile"}
-							{tab === "newsletter" && "Newsletter"}
 						{tab === "audit" && "Audit Log"}
 						</button>
 					))}
@@ -100,7 +98,6 @@ function Admin() {
 					{activeTab === "board" && <BoardMembersSection />}
 					{activeTab === "settings" && <SettingsSection />}
 					{activeTab === "profile" && <ProfileSection />}
-					{activeTab === "newsletter" && isAdmin && <NewsletterSection />}
 				{activeTab === "audit" && <AuditLogSection />}
 				</section>
 			</div>
