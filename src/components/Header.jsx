@@ -52,7 +52,7 @@ const Header = () => {
     <header className="header" role="banner">
       <div className="header-container">
         <Link
-          to="/preview"
+          to="/"
           className="logo"
           onClick={handleLogoClick}
           aria-label="A Life Worth Celebrating - Go to homepage"
@@ -73,7 +73,7 @@ const Header = () => {
           <ul className="nav-list" role="list">
             <li>
               <NavLink
-                to="/preview"
+                to="/"
                 onClick={closeMenu}
                 className={({ isActive }) => (isActive ? "active" : "")}
               >
