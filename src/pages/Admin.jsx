@@ -3469,6 +3469,7 @@ function NewsletterSection() {
 	const [togglingId, setTogglingId] = useState(null);
 	const [deletingId, setDeletingId] = useState(null);
 	const [exporting, setExporting] = useState(null);
+	const [markingNewId, setMarkingNewId] = useState(null);
 
 	const fetchSubscribers = async () => {
 		try {
@@ -3555,6 +3556,20 @@ function NewsletterSection() {
 		}
 	};
 
+	const handleMarkNew = async (id) => {
+		setMarkingNewId(id);
+		try {
+			const res = await fetch(`/api/newsletter/subscribers/${id}/mark-new`, { method: "POST" });
+			if (!res.ok) throw new Error("Failed to mark as new");
+			const updated = await res.json();
+			setSubscribers((prev) => prev.map((s) => (s.id === id ? updated : s)));
+		} catch (err) {
+			setError(err.message);
+		} finally {
+			setMarkingNewId(null);
+		}
+	};
+
 	const newCount = subscribers.filter((s) => !s.exported_at).length;
 
 	return (
@@ -3635,7 +3650,7 @@ function NewsletterSection() {
 											background: sub.status === "active" ? "#16a34a" : "#9ca3af",
 											flexShrink: 0,
 										}} />
-										{togglingId === sub.id ? "Saving…" : sub.status === "active" ? "Active" : "Unsubscribed"}
+										{togglingId === sub.id ? "Saving…" : sub.status === "active" ? "Subscribed" : "Unsubscribed"}
 									</button>
 								</td>
 								<td style={{ fontSize: "0.875rem", color: "var(--color-text-light)" }}>
@@ -3645,9 +3660,28 @@ function NewsletterSection() {
 								</td>
 								<td style={{ fontSize: "0.875rem" }}>
 									{sub.exported_at ? (
-										<span style={{ color: "var(--color-text-light)" }}>
-											{new Date(sub.exported_at).toLocaleDateString()}
-										</span>
+										<div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+											<span style={{ color: "var(--color-text-light)" }}>
+												{new Date(sub.exported_at).toLocaleDateString()}
+											</span>
+											<button
+												type="button"
+												onClick={() => handleMarkNew(sub.id)}
+												disabled={markingNewId === sub.id}
+												style={{
+													padding: "2px 8px",
+													borderRadius: "20px",
+													border: "1px solid currentColor",
+													cursor: markingNewId === sub.id ? "wait" : "pointer",
+													fontSize: "0.7rem",
+													fontWeight: "600",
+													background: "transparent",
+													color: "#9ca3af",
+												}}
+											>
+												{markingNewId === sub.id ? "…" : "Mark as New"}
+											</button>
+										</div>
 									) : (
 										<span style={{
 											display: "inline-block",
