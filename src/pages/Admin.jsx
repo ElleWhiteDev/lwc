@@ -3468,6 +3468,7 @@ function NewsletterSection() {
 	const [error, setError] = useState("");
 	const [togglingId, setTogglingId] = useState(null);
 	const [deletingId, setDeletingId] = useState(null);
+	const [exporting, setExporting] = useState(null);
 
 	const fetchSubscribers = async () => {
 		try {
@@ -3527,17 +3528,57 @@ function NewsletterSection() {
 		}
 	};
 
-	const handleExport = () => {
-		window.location.href = "/api/newsletter/subscribers/export";
+	const handleExport = async (type) => {
+		const url = type === "new"
+			? "/api/newsletter/subscribers/export/new"
+			: "/api/newsletter/subscribers/export";
+		setExporting(type);
+		try {
+			const res = await fetch(url);
+			if (res.status === 404) {
+				setError("No new subscribers to export.");
+				return;
+			}
+			if (!res.ok) throw new Error("Export failed");
+			const blob = await res.blob();
+			const filename = type === "new" ? "newsletter-subscribers-new.csv" : "newsletter-subscribers.csv";
+			const a = document.createElement("a");
+			a.href = URL.createObjectURL(blob);
+			a.download = filename;
+			a.click();
+			URL.revokeObjectURL(a.href);
+			await fetchSubscribers();
+		} catch (err) {
+			setError(err.message);
+		} finally {
+			setExporting(null);
+		}
 	};
+
+	const newCount = subscribers.filter((s) => !s.exported_at).length;
 
 	return (
 		<div>
 			<div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--spacing-lg)" }}>
 				<h3 style={{ margin: 0 }}>Newsletter Subscribers</h3>
-				<button type="button" className="btn btn-secondary" onClick={handleExport}>
-					Export CSV
-				</button>
+				<div style={{ display: "flex", gap: "var(--spacing-sm)" }}>
+					<button
+						type="button"
+						className="btn btn-secondary"
+						onClick={() => handleExport("new")}
+						disabled={exporting !== null || newCount === 0}
+					>
+						{exporting === "new" ? "Exporting…" : `Export New${newCount > 0 ? ` (${newCount})` : ""}`}
+					</button>
+					<button
+						type="button"
+						className="btn btn-secondary"
+						onClick={() => handleExport("all")}
+						disabled={exporting !== null}
+					>
+						{exporting === "all" ? "Exporting…" : "Export All"}
+					</button>
+				</div>
 			</div>
 
 			{error && (
@@ -3558,6 +3599,7 @@ function NewsletterSection() {
 							<th>Name</th>
 							<th>Status</th>
 							<th>Subscribed</th>
+							<th>Exported</th>
 							<th>Actions</th>
 						</tr>
 					</thead>
@@ -3600,6 +3642,25 @@ function NewsletterSection() {
 									{sub.subscribed_at
 										? new Date(sub.subscribed_at).toLocaleDateString()
 										: "—"}
+								</td>
+								<td style={{ fontSize: "0.875rem" }}>
+									{sub.exported_at ? (
+										<span style={{ color: "var(--color-text-light)" }}>
+											{new Date(sub.exported_at).toLocaleDateString()}
+										</span>
+									) : (
+										<span style={{
+											display: "inline-block",
+											padding: "2px 8px",
+											borderRadius: "20px",
+											fontSize: "0.75rem",
+											fontWeight: "600",
+											background: "rgba(139,92,246,0.12)",
+											color: "#7c3aed",
+										}}>
+											New
+										</span>
+									)}
 								</td>
 								<td>
 									<button

@@ -122,16 +122,16 @@ router.post("/unsubscribe", async (req, res) => {
   }
 });
 
-// Export subscribers as CSV (admin only) - MUST come before /subscribers route
+// Export all subscribers as CSV (admin only) - MUST come before /subscribers route
 router.get("/subscribers/export", requireAdmin, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT email, name, status, subscribed_at, unsubscribed_at
+      `SELECT email, name, status, subscribed_at, unsubscribed_at, exported_at
        FROM newsletter_subscribers
        ORDER BY subscribed_at DESC`
     );
 
-    // Create CSV content
+    const now = new Date();
     const headers = ["Email", "Name", "Status", "Subscribed At", "Unsubscribed At"];
     const rows = result.rows.map((row) => [
       row.email,
@@ -146,9 +146,14 @@ router.get("/subscribers/export", requireAdmin, async (req, res) => {
       ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
     ].join("\n");
 
+    await pool.query(
+      `UPDATE newsletter_subscribers SET exported_at = $1`,
+      [now]
+    );
+
     res.setHeader("Content-Type", "text/csv");
     res.setHeader("Content-Disposition", "attachment; filename=newsletter-subscribers.csv");
-    logger.info("Subscribers exported", { count: result.rows.length, userId: req.user.id });
+    logger.info("All subscribers exported", { count: result.rows.length, userId: req.user.id });
     res.send(csv);
   } catch (error) {
     logger.error("Error exporting subscribers", { userId: req.user.id, error: error.message, stack: error.stack });
@@ -156,11 +161,55 @@ router.get("/subscribers/export", requireAdmin, async (req, res) => {
   }
 });
 
+// Export only new (never-exported) subscribers as CSV (admin only)
+router.get("/subscribers/export/new", requireAdmin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT email, name, status, subscribed_at, unsubscribed_at
+       FROM newsletter_subscribers
+       WHERE exported_at IS NULL
+       ORDER BY subscribed_at DESC`
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ message: "No new subscribers to export" });
+    }
+
+    const now = new Date();
+    const headers = ["Email", "Name", "Status", "Subscribed At", "Unsubscribed At"];
+    const rows = result.rows.map((row) => [
+      row.email,
+      row.name || "",
+      row.status,
+      row.subscribed_at ? new Date(row.subscribed_at).toISOString() : "",
+      row.unsubscribed_at ? new Date(row.unsubscribed_at).toISOString() : "",
+    ]);
+
+    const csv = [
+      headers.join(","),
+      ...rows.map((row) => row.map((cell) => `"${cell}"`).join(",")),
+    ].join("\n");
+
+    await pool.query(
+      `UPDATE newsletter_subscribers SET exported_at = $1 WHERE exported_at IS NULL`,
+      [now]
+    );
+
+    res.setHeader("Content-Type", "text/csv");
+    res.setHeader("Content-Disposition", "attachment; filename=newsletter-subscribers-new.csv");
+    logger.info("New subscribers exported", { count: result.rows.length, userId: req.user.id });
+    res.send(csv);
+  } catch (error) {
+    logger.error("Error exporting new subscribers", { userId: req.user.id, error: error.message, stack: error.stack });
+    res.status(500).json({ message: "Failed to export new subscribers" });
+  }
+});
+
 // Get all newsletter subscribers (admin only)
 router.get("/subscribers", requireAdmin, async (req, res) => {
   try {
     const result = await pool.query(
-      `SELECT id, email, name, status, subscribed_at, unsubscribed_at, created_at
+      `SELECT id, email, name, status, subscribed_at, unsubscribed_at, exported_at, created_at
        FROM newsletter_subscribers
        ORDER BY subscribed_at DESC`
     );

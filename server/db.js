@@ -187,6 +187,18 @@ async function initDb() {
   `);
 
   await pool.query(`
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'newsletter_subscribers' AND column_name = 'exported_at'
+      ) THEN
+        ALTER TABLE newsletter_subscribers ADD COLUMN exported_at TIMESTAMPTZ;
+      END IF;
+    END $$;
+  `);
+
+  await pool.query(`
     CREATE TABLE IF NOT EXISTS news_post_overrides (
       post_id TEXT PRIMARY KEY,
       source TEXT NOT NULL DEFAULT 'unknown',
