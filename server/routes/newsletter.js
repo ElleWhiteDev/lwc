@@ -307,7 +307,7 @@ router.put("/subscribers/:id", requireAdmin, async (req, res) => {
       `UPDATE newsletter_subscribers
        SET email = $1, name = $2, status = $3
        WHERE id = $4
-       RETURNING id, email, name, status, subscribed_at, unsubscribed_at, created_at`,
+       RETURNING id, email, name, status, subscribed_at, unsubscribed_at, exported_at, created_at`,
       [email, name, status, id]
     );
 
