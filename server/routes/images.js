@@ -269,6 +269,66 @@ router.delete("/pride-festival-image", requireAuth, async (req, res) => {
   }
 });
 
+// Upload countdown photo
+router.post("/countdown-photo", requireAuth, upload.single("image"), async (req, res) => {
+  const file = req.file;
+
+  if (!file) {
+    return res.status(400).json({ message: "No file uploaded" });
+  }
+
+  try {
+    // Reuses the "pride-festival" S3 prefix, which is already public-read in the
+    // bucket policy; a dedicated "countdown" prefix returned 403 Access Denied.
+    const imageUrl = await uploadToS3(file.buffer, file.originalname, file.mimetype, "pride-festival");
+
+    await logAudit({
+      userId: req.user.id,
+      action: "upload",
+      entityType: "countdown_image",
+      entityId: null,
+      previousData: null,
+      newData: { imageUrl },
+    });
+
+    logger.info("Countdown photo uploaded", { userId: req.user.id, imageUrl });
+
+    return res.status(201).json({ imageUrl });
+  } catch (error) {
+    logger.error("Error uploading countdown photo", { error: error.message, stack: error.stack });
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
+// Delete countdown photo
+router.delete("/countdown-photo", requireAuth, async (req, res) => {
+  const { imageUrl } = req.body;
+
+  if (!imageUrl) {
+    return res.status(400).json({ message: "imageUrl is required" });
+  }
+
+  try {
+    await deleteFromS3(imageUrl);
+
+    await logAudit({
+      userId: req.user.id,
+      action: "delete",
+      entityType: "countdown_image",
+      entityId: null,
+      previousData: { imageUrl },
+      newData: null,
+    });
+
+    logger.info("Countdown photo deleted", { userId: req.user.id, imageUrl });
+
+    return res.status(204).end();
+  } catch (error) {
+    logger.error("Error deleting countdown photo", { error: error.message, stack: error.stack });
+    return res.status(500).json({ message: "Internal server error" });
+  }
+});
+
 // Upload site logo
 router.post("/site-logo", requireAuth, upload.single("image"), async (req, res) => {
   const file = req.file;

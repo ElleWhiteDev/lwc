@@ -56,7 +56,7 @@ const Resources = () => {
           <h2 id="resources-links-heading" className="section-title">Forms &amp; Links</h2>
 
           <div className="resources-grid">
-            {links.map(({ id, label, description, href, icon }) => (
+            {links.filter((link) => !link.hidden).map(({ id, label, description, href, icon }) => (
               <a
                 key={id}
                 href={href}

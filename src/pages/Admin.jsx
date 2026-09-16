@@ -163,6 +163,10 @@ function HomeContentEditor() {
 	const [prideFestivalPhotos, setPrideFestivalPhotos] = useState([]);
 	const [uploadProgress, setUploadProgress] = useState(null); // { current: filename, done: n, total: n }
 
+	// Countdown Photos
+	const [countdownPhotos, setCountdownPhotos] = useState([]);
+	const [countdownUploadProgress, setCountdownUploadProgress] = useState(null);
+
 	// CTA Section
 	const [ctaHeading, setCtaHeading] = useState("Ready to Make a Difference?");
 	const [ctaBody, setCtaBody] = useState(
@@ -193,6 +197,8 @@ function HomeContentEditor() {
 					if (content.prideShows) setPrideShows(content.prideShows);
 					if (Array.isArray(content.prideFestivalPhotos))
 						setPrideFestivalPhotos(content.prideFestivalPhotos);
+					if (Array.isArray(content.countdownPhotos))
+						setCountdownPhotos(content.countdownPhotos);
 					if (content.ctaHeading) setCtaHeading(content.ctaHeading);
 					if (content.ctaBody) setCtaBody(content.ctaBody);
 				}
@@ -266,6 +272,58 @@ function HomeContentEditor() {
 		}
 	};
 
+	const handleCountdownPhotoUpload = async (e) => {
+		const files = Array.from(e.target.files);
+		if (!files.length) return;
+		setError("");
+		let successCount = 0;
+		for (let i = 0; i < files.length; i++) {
+			const file = files[i];
+			setCountdownUploadProgress({ current: file.name, done: i, total: files.length });
+			try {
+				const formData = new FormData();
+				formData.append("image", file);
+				const res = await fetch("/api/countdown-photo", {
+					method: "POST",
+					credentials: "include",
+					body: formData,
+				});
+				if (!res.ok) {
+					const data = await res.json().catch(() => null);
+					throw new Error(data?.message || "Upload failed");
+				}
+				const data = await res.json();
+				setCountdownPhotos((prev) => [...prev, data.imageUrl]);
+				successCount++;
+			} catch (err) {
+				toast.error(`Failed to upload "${file.name}": ${err.message}`);
+			}
+		}
+		setCountdownUploadProgress(null);
+		e.target.value = "";
+		if (successCount > 0)
+			toast.success(`${successCount} photo${successCount > 1 ? "s" : ""} uploaded`);
+	};
+
+	const handleCountdownPhotoDelete = async (imageUrl) => {
+		try {
+			const res = await fetch("/api/countdown-photo", {
+				method: "DELETE",
+				headers: { "Content-Type": "application/json" },
+				credentials: "include",
+				body: JSON.stringify({ imageUrl }),
+			});
+			if (!res.ok && res.status !== 204) {
+				const data = await res.json().catch(() => null);
+				throw new Error(data?.message || "Delete failed");
+			}
+			setCountdownPhotos((prev) => prev.filter((url) => url !== imageUrl));
+			toast.success("Photo removed");
+		} catch (err) {
+			toast.error(err.message || "Failed to delete photo");
+		}
+	};
+
 	const handleSave = async (event) => {
 		event.preventDefault();
 		setError("");
@@ -279,6 +337,7 @@ function HomeContentEditor() {
 			prideVendors,
 			prideShows,
 			prideFestivalPhotos,
+			countdownPhotos,
 			ctaHeading,
 			ctaBody,
 		};
@@ -429,6 +488,60 @@ function HomeContentEditor() {
 							<button
 								type="button"
 								onClick={() => handlePhotoDelete(url)}
+								style={{
+									position: "absolute", top: 4, right: 4,
+									background: "rgba(0,0,0,0.6)", color: "#fff",
+									border: "none", borderRadius: "50%",
+									width: 24, height: 24, cursor: "pointer",
+									fontSize: "0.75rem", lineHeight: 1,
+								}}
+								aria-label="Remove photo"
+							>
+								✕
+							</button>
+						</div>
+					))}
+				</div>
+			)}
+
+			<h3
+				style={{
+					marginTop: "var(--spacing-xl)",
+					marginBottom: "var(--spacing-md)",
+				}}
+			>
+				Countdown Section
+			</h3>
+			<p className="admin-help-text">
+				Photos shown in the carousel underneath the homepage countdown timer.
+			</p>
+			<label className="form-field">
+				<span>Upload Photos (JPG, PNG — multiple allowed)</span>
+				<input
+					type="file"
+					accept="image/*"
+					multiple
+					disabled={countdownUploadProgress !== null}
+					onChange={handleCountdownPhotoUpload}
+				/>
+			</label>
+			{countdownUploadProgress !== null && (
+				<p style={{ color: "var(--medium-gray)", margin: 0, fontSize: "0.9rem" }}>
+					Uploading {countdownUploadProgress.done + 1} of {countdownUploadProgress.total}: <strong>{countdownUploadProgress.current}</strong>
+				</p>
+			)}
+			{countdownPhotos.length > 0 && (
+				<div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: "var(--spacing-sm)", marginTop: "var(--spacing-sm)" }}>
+					{countdownPhotos.map((url) => (
+						<div key={url} style={{ position: "relative" }}>
+							<img
+								src={url}
+								alt="Countdown carousel photo"
+								style={{ width: "100%", aspectRatio: "1", objectFit: "cover", borderRadius: "var(--radius-md)" }}
+							/>
+							<button
+								type="button"
+								onClick={() => handleCountdownPhotoDelete(url)}
 								style={{
 									position: "absolute", top: 4, right: 4,
 									background: "rgba(0,0,0,0.6)", color: "#fff",
@@ -861,14 +974,24 @@ function ResourcesContentEditor() {
 					<div key={link.id} style={{ border: "1px solid var(--light-gray, #e5e7eb)", borderRadius: "8px", padding: "var(--spacing-md)" }}>
 						<div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--spacing-sm)" }}>
 							<strong style={{ color: "var(--medium-gray)" }}>Link {index + 1}</strong>
-							<button
-								type="button"
-								className="btn btn-cta-secondary"
-								style={{ padding: "4px 12px", fontSize: "0.85rem" }}
-								onClick={() => removeLink(link.id)}
-							>
-								Remove
-							</button>
+							<div style={{ display: "flex", alignItems: "center", gap: "var(--spacing-md)" }}>
+								<label style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.85rem", color: "var(--medium-gray)", cursor: "pointer" }}>
+									<input
+										type="checkbox"
+										checked={!link.hidden}
+										onChange={(e) => updateLink(link.id, "hidden", !e.target.checked)}
+									/>
+									Visible on site
+								</label>
+								<button
+									type="button"
+									className="btn btn-cta-secondary"
+									style={{ padding: "4px 12px", fontSize: "0.85rem" }}
+									onClick={() => removeLink(link.id)}
+								>
+									Remove
+								</button>
+							</div>
 						</div>
 						<label className="form-field">
 							<span>Label</span>

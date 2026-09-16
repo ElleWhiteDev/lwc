@@ -3,6 +3,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useSiteConfig } from "../config/siteConfig.jsx";
 import toast from "react-hot-toast";
 import StarBurstTarget from "../components/StarBurstTarget";
+import Countdown from "../components/Countdown";
 import "./Home.css";
 import LWCHomeBackground from "../assets/images/LWCHomeBackground.svg";
 
@@ -114,6 +115,7 @@ const Home = () => {
   };
 
   const prideFestivalPhotos = homeContent?.prideFestivalPhotos ?? [];
+  const countdownPhotos = homeContent?.countdownPhotos ?? [];
 
   const carouselPrev = useCallback(() => {
     setCarouselIndex((i) => (i === 0 ? prideFestivalPhotos.length - 1 : i - 1));
@@ -199,6 +201,8 @@ const Home = () => {
           <StarBurstTarget className="hero-image" />
         </div>
       </section>
+
+      <Countdown photos={countdownPhotos} />
 
       {/* Pride Festival Highlight */}
       <section className="pride-highlight section" aria-labelledby="pride-festival-heading">
