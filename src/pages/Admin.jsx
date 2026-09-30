@@ -106,14 +106,6 @@ function Admin() {
 	);
 }
 
-function isHttpUrl(value) {
-	try {
-		return ["http:", "https:"].includes(new URL(value).protocol);
-	} catch {
-		return false;
-	}
-}
-
 // Festival-day "WPIF Ticket" button shown at the top of the homepage; saves immediately
 function TicketButtonSettings() {
 	const [enabled, setEnabled] = useState(false);
@@ -133,8 +125,8 @@ function TicketButtonSettings() {
 
 	const save = async (nextEnabled) => {
 		const trimmed = url.trim();
-		if (nextEnabled && !isHttpUrl(trimmed)) {
-			toast.error("Enter a valid ticket link (starting with https://) first");
+		if (nextEnabled && !trimmed) {
+			toast.error("Enter a ticket link first");
 			return;
 		}
 		setSaving(true);
@@ -175,7 +167,7 @@ function TicketButtonSettings() {
 			<label className="form-field">
 				<span>Ticket Link</span>
 				<input
-					type="url"
+					type="text"
 					value={url}
 					onChange={(e) => setUrl(e.target.value)}
 					placeholder="https://..."

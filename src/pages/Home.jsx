@@ -35,6 +35,11 @@ function normalizeTiktokPost(p) {
   return { id: `tt-${p.id}`, source: "tiktok", text: p.video_description || p.title || "", image: p.cover_image_url || null, date: new Date(p.create_time * 1000).toISOString(), url: p.share_url };
 }
 
+// Free-form admin links like "www.example.com" would otherwise resolve relative to this site
+function withScheme(url) {
+  return /^[a-z][a-z\d+.-]*:/i.test(url) ? url : `https://${url}`;
+}
+
 const Home = () => {
   const siteConfig = useSiteConfig();
   const [homeContent, setHomeContent] = useState(null);
@@ -159,7 +164,7 @@ const Home = () => {
       {siteConfig.wpifTicketEnabled && siteConfig.wpifTicketUrl && (
         <div className="ticket-banner">
           <a
-            href={siteConfig.wpifTicketUrl}
+            href={withScheme(siteConfig.wpifTicketUrl)}
             target="_blank"
             rel="noopener noreferrer"
             className="btn ticket-banner-btn"
