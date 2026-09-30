@@ -105,12 +105,103 @@ function Admin() {
 	);
 }
 
+function isHttpUrl(value) {
+	try {
+		return ["http:", "https:"].includes(new URL(value).protocol);
+	} catch {
+		return false;
+	}
+}
+
+// Festival-day "WPIF Ticket" button shown at the top of the homepage; saves immediately
+function TicketButtonSettings() {
+	const [enabled, setEnabled] = useState(false);
+	const [url, setUrl] = useState("");
+	const [saving, setSaving] = useState(false);
+
+	useEffect(() => {
+		fetch("/api/content/siteConfig")
+			.then((res) => (res.ok ? res.json() : null))
+			.then((data) => {
+				setEnabled(Boolean(data?.data?.wpifTicketEnabled));
+				setUrl(data?.data?.wpifTicketUrl ?? "");
+			})
+			.catch(() => toast.error("Failed to load WPIF ticket settings"));
+	}, []);
+
+	const save = async (nextEnabled) => {
+		const trimmed = url.trim();
+		if (nextEnabled && !isHttpUrl(trimmed)) {
+			toast.error("Enter a valid ticket link (starting with https://) first");
+			return;
+		}
+		setSaving(true);
+		try {
+			const response = await fetch("/api/content/siteConfig", {
+				method: "PUT",
+				headers: { "Content-Type": "application/json" },
+				credentials: "include",
+				body: JSON.stringify({ data: { wpifTicketEnabled: nextEnabled, wpifTicketUrl: trimmed } }),
+			});
+			if (!response.ok) throw new Error();
+			setEnabled(nextEnabled);
+			setUrl(trimmed);
+			toast.success(nextEnabled ? "WPIF Ticket button is live on the homepage" : "WPIF Ticket settings saved");
+		} catch {
+			toast.error("Failed to save WPIF ticket settings");
+		} finally {
+			setSaving(false);
+		}
+	};
+
+	return (
+		<form
+			onSubmit={(e) => { e.preventDefault(); save(enabled); }}
+			style={{
+				border: "2px solid var(--primary-purple)",
+				borderRadius: "var(--radius-md)",
+				padding: "var(--spacing-lg)",
+				marginBottom: "var(--spacing-xl)",
+			}}
+		>
+			<h3 style={{ marginTop: 0 }}>WPIF Ticket Button</h3>
+			<p className="admin-help-text">
+				Shows a prominent "WPIF Ticket" button at the top of the homepage. Status:{" "}
+				<strong>{enabled ? "Showing" : "Hidden"}</strong>
+			</p>
+			<label className="form-field">
+				<span>Ticket Link</span>
+				<input
+					type="url"
+					value={url}
+					onChange={(e) => setUrl(e.target.value)}
+					placeholder="https://..."
+				/>
+			</label>
+			<div style={{ display: "flex", gap: "var(--spacing-md)", flexWrap: "wrap" }}>
+				<button
+					type="button"
+					className={`btn ${enabled ? "btn-danger" : "btn-success"}`}
+					disabled={saving}
+					onClick={() => save(!enabled)}
+				>
+					{enabled ? "Hide Button" : "Show Button"}
+				</button>
+				<button type="submit" className="btn btn-secondary" disabled={saving}>
+					Save Link
+				</button>
+			</div>
+		</form>
+	);
+}
+
 function ContentSection() {
 	const [page, setPage] = useState("home");
 
 	return (
 		<div>
 			<h2>Page Content</h2>
+			<TicketButtonSettings />
 			<p className="admin-help-text">
 				Edit content for each page using the visual form builder below.
 			</p>

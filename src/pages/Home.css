@@ -680,3 +680,38 @@
     font-size: 1.75rem;
   }
 }
+
+/* Festival-day ticket banner */
+.ticket-banner {
+  display: flex;
+  justify-content: center;
+  padding: var(--spacing-md);
+  background: linear-gradient(90deg, #e94057, #f27121, #f8d800, #4caf50, #2196f3, #9c27b0);
+}
+
+.ticket-banner-btn {
+  font-size: clamp(1.25rem, 4vw, 1.75rem);
+  font-weight: 700;
+  padding: var(--spacing-md) var(--spacing-2xl);
+  background: var(--white);
+  color: var(--primary-purple-dark);
+  box-shadow: var(--shadow-lg);
+  animation: ticketPulse 2s ease-in-out infinite;
+}
+
+.ticket-banner-btn:hover,
+.ticket-banner-btn:focus-visible {
+  color: var(--primary-purple-dark);
+  transform: translateY(-2px);
+}
+
+@keyframes ticketPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticket-banner-btn {
+    animation: none;
+  }
+}

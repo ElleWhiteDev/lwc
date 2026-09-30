@@ -155,6 +155,21 @@ const Home = () => {
 
   return (
     <div className="home">
+      {/* Festival-day ticket button (toggled in Admin) */}
+      {siteConfig.wpifTicketEnabled && siteConfig.wpifTicketUrl && (
+        <div className="ticket-banner">
+          <a
+            href={siteConfig.wpifTicketUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn ticket-banner-btn"
+            aria-label="WPIF Ticket (opens in new tab)"
+          >
+            <span aria-hidden="true">🎟️</span> WPIF Ticket
+          </a>
+        </div>
+      )}
+
       {/* Hero */}
       <section
         className="hero"
