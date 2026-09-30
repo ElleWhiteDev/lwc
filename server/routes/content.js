@@ -16,13 +16,23 @@ const SENSITIVE_FIELDS = new Set([
   "tiktokClientSecret", "tiktokAccessToken", "tiktokRefreshToken", "tiktokOAuthState",
 ]);
 
-function redactSiteConfig(data) {
-  if (!data || typeof data !== "object") return data;
+const REDACTED = "[REDACTED]";
+
+function redactSecrets(slug, data) {
+  if (slug !== "siteConfig" || !data || typeof data !== "object") return data;
   const out = { ...data };
   for (const field of SENSITIVE_FIELDS) {
-    if (out[field]) out[field] = "[REDACTED]";
+    if (out[field]) out[field] = REDACTED;
   }
   return out;
+}
+
+// The admin form echoes back the redacted placeholder for secrets it never saw; keep the stored value
+function dropRedactedPlaceholders(slug, data) {
+  if (slug !== "siteConfig") return data;
+  return Object.fromEntries(
+    Object.entries(data).filter(([k, v]) => !(SENSITIVE_FIELDS.has(k) && v === REDACTED)),
+  );
 }
 
 const router = express.Router();
@@ -40,7 +50,8 @@ router.get("/:slug", async (req, res) => {
       return res.json({ slug, data: null });
     }
 
-    return res.json(result.rows[0]);
+    const row = result.rows[0];
+    return res.json({ ...row, data: redactSecrets(slug, row.data) });
   } catch (error) {
     logger.error("Error fetching content", { slug, error: error.message, stack: error.stack });
     return res.status(500).json({ message: "Internal server error" });
@@ -49,13 +60,15 @@ router.get("/:slug", async (req, res) => {
 
 router.put("/:slug", requireAuth, async (req, res) => {
   const { slug } = req.params;
-  const { data } = req.body ?? {};
+  const { data: rawData } = req.body ?? {};
 
-  if (data == null || typeof data !== "object") {
+  if (rawData == null || typeof rawData !== "object") {
     return res
       .status(400)
       .json({ message: "Request body must include a data object" });
   }
+
+  const data = dropRedactedPlaceholders(slug, rawData);
 
   try {
     const existingResult = await pool.query(
@@ -99,8 +112,8 @@ router.put("/:slug", requireAuth, async (req, res) => {
       auditAction = existing ? "update" : "create";
     }
 
-    const auditPrev = slug === "siteConfig" ? redactSiteConfig(existing?.data ?? null) : (existing?.data ?? null);
-    const auditNew = slug === "siteConfig" ? redactSiteConfig(saved.data) : saved.data;
+    const auditPrev = redactSecrets(slug, existing?.data ?? null);
+    const auditNew = redactSecrets(slug, saved.data);
 
     await logAudit({
       userId: req.user.id,
@@ -153,7 +166,7 @@ router.put("/:slug", requireAuth, async (req, res) => {
       action: existing ? "update" : "create"
     });
 
-    return res.json(saved);
+    return res.json({ ...saved, data: auditNew });
   } catch (error) {
     logger.error("Error saving content", { slug, error: error.message, stack: error.stack });
     return res.status(500).json({ message: "Internal server error" });

@@ -1,58 +1,45 @@
-import express from "express";
-import { pool } from "../db.js";
-import logger from "../utils/logger.js";
+import { graphGet } from "../utils/metaGraph.js";
+import { createFeedRouter } from "../utils/socialFeed.js";
 
-const router = express.Router();
+const POST_FIELDS = "message,created_time,full_picture,permalink_url";
 
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
-let cache = { posts: null, fetchedAt: 0 };
+// The saved token may be a user token; Page posts require a Page token, so exchange it once
+// and reuse the result until the saved token changes or a request with it fails.
+let pageToken = { source: null, token: null };
 
-async function getFacebookCredentials() {
-  const result = await pool.query(
-    "SELECT data FROM site_content WHERE slug = $1",
-    ["siteConfig"],
-  );
-  const config = result.rows[0]?.data ?? {};
-  return {
-    pageId: config.facebookPageId,
-    accessToken: config.facebookAccessToken,
-  };
+async function resolvePageToken(pageId, accessToken) {
+  if (pageToken.source === accessToken) return pageToken.token;
+  try {
+    const { access_token } = await graphGet(pageId, { fields: "access_token" }, accessToken);
+    if (access_token) {
+      pageToken = { source: accessToken, token: access_token };
+      return access_token;
+    }
+  } catch {
+    // Already a Page token (or no Page access) — use it as-is and let the posts call report errors
+  }
+  return accessToken;
 }
 
-router.get("/posts", async (req, res) => {
-  if (cache.posts && Date.now() - cache.fetchedAt < CACHE_TTL) {
-    return res.json({ posts: cache.posts });
-  }
-
-  let pageId, accessToken;
+async function fetchPosts(pageId, accessToken) {
+  const token = await resolvePageToken(pageId, accessToken);
   try {
-    ({ pageId, accessToken } = await getFacebookCredentials());
+    const { data = [] } = await graphGet(
+      `${encodeURIComponent(pageId)}/posts`,
+      { fields: POST_FIELDS, limit: 100 },
+      token,
+    );
+    return data.filter((p) => p.message);
   } catch (error) {
-    logger.error("Error reading Facebook credentials from DB", { error: error.message });
-    return res.status(500).json({ message: "Internal server error", posts: [] });
+    pageToken = { source: null, token: null };
+    throw error;
   }
+}
 
-  if (!pageId || !accessToken) {
-    return res.json({ posts: [] });
-  }
-
-  try {
-    const url = `https://graph.facebook.com/v19.0/${encodeURIComponent(pageId)}/posts?fields=message,created_time,full_picture,permalink_url&limit=100&access_token=${accessToken}`;
-    const response = await fetch(url);
-    const data = await response.json();
-
-    if (data.error) {
-      logger.error("Facebook API error", { error: data.error });
-      return res.status(502).json({ message: "Failed to fetch Facebook posts", posts: [] });
-    }
-
-    const posts = (data.data || []).filter((p) => p.message);
-    cache = { posts, fetchedAt: Date.now() };
-    return res.json({ posts });
-  } catch (error) {
-    logger.error("Error fetching Facebook posts", { error: error.message });
-    return res.status(500).json({ message: "Internal server error", posts: [] });
-  }
+export default createFeedRouter({
+  name: "Facebook",
+  credentials: (c) => (c.facebookPageId && c.facebookAccessToken
+    ? [c.facebookPageId, c.facebookAccessToken]
+    : null),
+  fetchPosts,
 });
-
-export default router;
