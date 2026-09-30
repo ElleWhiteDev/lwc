@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import toast from "react-hot-toast";
 import { useAuth } from "../context/AuthContext.jsx";
+import { useRefreshSiteConfig } from "../config/siteConfig.jsx";
 import {
 	DndContext,
 	closestCenter,
@@ -118,6 +119,7 @@ function TicketButtonSettings() {
 	const [enabled, setEnabled] = useState(false);
 	const [url, setUrl] = useState("");
 	const [saving, setSaving] = useState(false);
+	const refreshSiteConfig = useRefreshSiteConfig();
 
 	useEffect(() => {
 		fetch("/api/content/siteConfig")
@@ -146,6 +148,7 @@ function TicketButtonSettings() {
 			if (!response.ok) throw new Error();
 			setEnabled(nextEnabled);
 			setUrl(trimmed);
+			refreshSiteConfig();
 			toast.success(nextEnabled ? "WPIF Ticket button is live on the homepage" : "WPIF Ticket settings saved");
 		} catch {
 			toast.error("Failed to save WPIF ticket settings");
@@ -1145,6 +1148,7 @@ function SiteConfigEditor() {
 	const [error, setError] = useState("");
 	const [success, setSuccess] = useState("");
 	const [uploadingLogo, setUploadingLogo] = useState(false);
+	const refreshSiteConfig = useRefreshSiteConfig();
 
 	// General
 	const [siteName, setSiteName] = useState("A Life Worth Celebrating, Inc.");
@@ -1280,6 +1284,7 @@ function SiteConfigEditor() {
 				throw new Error(data?.message || "Failed to save site config");
 			}
 
+			refreshSiteConfig();
 			setSuccess("Site configuration saved successfully!");
 			toast.success("Site configuration saved successfully!");
 			window.scrollTo({ top: 0, behavior: "smooth" });

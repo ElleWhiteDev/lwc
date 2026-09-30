@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect, useCallback } from "react";
 
 // Default fallback configuration
 const DEFAULT_CONFIG = {
@@ -15,11 +15,12 @@ const DEFAULT_CONFIG = {
 };
 
 const SiteConfigContext = createContext(DEFAULT_CONFIG);
+const RefreshSiteConfigContext = createContext(() => {});
 
 export const SiteConfigProvider = ({ children }) => {
   const [config, setConfig] = useState(DEFAULT_CONFIG);
 
-  useEffect(() => {
+  const refresh = useCallback(() => {
     fetch("/api/content/siteConfig")
       .then((res) => {
         if (!res.ok) throw new Error("Failed to fetch site config");
@@ -36,12 +37,19 @@ export const SiteConfigProvider = ({ children }) => {
       });
   }, []);
 
+  useEffect(refresh, [refresh]);
+
   return (
-    <SiteConfigContext.Provider value={config}>
-      {children}
-    </SiteConfigContext.Provider>
+    <RefreshSiteConfigContext.Provider value={refresh}>
+      <SiteConfigContext.Provider value={config}>
+        {children}
+      </SiteConfigContext.Provider>
+    </RefreshSiteConfigContext.Provider>
   );
 };
+
+// Re-fetch site config after an admin save so the change shows without a page reload
+export const useRefreshSiteConfig = () => useContext(RefreshSiteConfigContext);
 
 export const useSiteConfig = () => {
   return useContext(SiteConfigContext);
