@@ -26,7 +26,8 @@ async function fetchPosts(pageId, accessToken) {
   try {
     const { data = [] } = await graphGet(
       `${encodeURIComponent(pageId)}/posts`,
-      { fields: POST_FIELDS, limit: 100 },
+      // Graph rejects larger Page post requests with "Please reduce the amount of data"
+      { fields: POST_FIELDS, limit: 25 },
       token,
     );
     return data.filter((p) => p.message);
